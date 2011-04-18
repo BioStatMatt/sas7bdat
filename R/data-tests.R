@@ -25,42 +25,25 @@ dirlist <- file.path(dirpath, list.files(dirpath))
 # Header read test 
 headers <- list()
 for(i in 1:length(dirlist)) {
-    con <- xzfile(dirlist[i], "rb")
+    if(grepl("\\.xz$", dirlist[i])) {
+        con <- xzfile(dirlist[i], "rb")
+    } else {
+        con <- file(dirlist[i], "rb")
+    }
     headers[[i]] <- read.sas7bdat(con, debug=1)
     close(con)
 }
 # consider platform polymorphisms in the header
 # sapply(headers, function(x) c(x$header[36:41], x$header[217:240]))
 
-# Subheader read test
-subread <- list()
-for(i in 1:length(dirlist)) {
-    con <- xzfile(dirlist[i], "rb")
-    subread[[i]] <- read.sas7bdat(con, debug=2)
-    close(con)
-}
-
-# Subheader parse test
-subparse <- list()
-for(i in 1:length(dirlist)) {
-    con <- xzfile(dirlist[i], "rb")
-    subparse[[i]] <- read.sas7bdat(con, debug=3)
-    close(con)
-}
-
-# Data read test
-data_test <- list()
-for(i in 1:length(dirlist)) {
-    cat("data read test:", dirlist[i], "\n")
-    con <- xzfile(dirlist[i], "rb")
-    data_test[[i]] <- read.sas7bdat(con, debug=4)
-    close(con)
-}
-
 complete_read_test <- list()
 for(i in 1:length(dirlist)) {
     cat("complete read test:", dirlist[i], "\n")
-    con <- xzfile(dirlist[i], "rb")
+    if(grepl("\\.xz$", dirlist[i])) {
+        con <- xzfile(dirlist[i], "rb")
+    } else {
+        con <- file(dirlist[i], "rb")
+    }
     complete_read_test[[i]] <- tryCatch(read.sas7bdat(con),
         error=function(e)e)
     close(con)
