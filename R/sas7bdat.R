@@ -14,7 +14,7 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-BUGREPORT <- "please report to Matt Shotwell <biostatmatt@gmail.com>"
+BUGREPORT <- "please report bugs to sas7bdatRbugs@gmail.com"
 CAUTION   <- "please verify data correctness"
 
 # Host systems known to work
