@@ -97,7 +97,7 @@ read.sas7bdat <- function(file, debug=FALSE) {
     if(length(header) < 1024)
         return(fail("header too short (not a sas7bdat file?)"))
     if(!check_magic_number(header))
-        return(fail(paste("magic number mismatch", BUGREPORT,)))
+        return(fail(paste("magic number mismatch", BUGREPORT)))
 
     # Timestamp is epoch 01/01/1960
     chron <- try(library("chron", quietly=TRUE), silent=TRUE)

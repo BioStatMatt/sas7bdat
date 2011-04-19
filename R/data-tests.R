@@ -21,7 +21,7 @@
 source("sas7bdat.R")
 dirpath <- file.path("..","data")
 dirlist <- file.path(dirpath, list.files(dirpath))
-
+dirlist <- dirlist[grepl("\\.xz$|\\.sas7bdat$", dirlist)]
 # Header read test 
 headers <- list()
 for(i in 1:length(dirlist)) {
