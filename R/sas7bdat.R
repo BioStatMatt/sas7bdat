@@ -21,7 +21,7 @@ CAUTION   <- "please verify data correctness"
 KNOWNHOST <- c("WIN_PRO", "WIN_NT", "WIN_NTSV", "WIN_SRV",
                "WIN_ASRV", "XP_PRO", "XP_HOME", "W32_VSPRO",
                "NET_ASRV", "NET_DSRV", "NET_SRV", "WIN_98",
-               "W32_VSPR")
+               "W32_VSPR", "WIN")
 
 # Subheader 'signatures'
 SUBH_ROWSIZE <- as.raw(c(0xf7,0xf7,0xf7,0xf7))
