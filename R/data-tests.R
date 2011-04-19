@@ -19,7 +19,7 @@
 # compressed in the data/files/ directory. 
 
 source("sas7bdat.R")
-dirpath <- file.path("..","data","files")
+dirpath <- file.path("..","data")
 dirlist <- file.path(dirpath, list.files(dirpath))
 
 # Header read test 
