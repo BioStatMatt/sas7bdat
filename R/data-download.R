@@ -31,6 +31,6 @@ MAXSIZE <- 1024L * 1024L
 sources <- subset(sources, !grepl(".zip$", url) & uncompressed <= MAXSIZE)
 
 for(i in 1:nrow(sources)) {
-    path <- file.path("..", "data", "files", sources$filename[i])
+    path <- file.path("..", "data", sources$filename[i])
     tryCatch(download.file(sources$url[i], path), error=function(e) unlink(path))
 }
