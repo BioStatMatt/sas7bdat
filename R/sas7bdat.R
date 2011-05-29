@@ -70,9 +70,7 @@ splice_col_attr_subheaders <- function(col_attr) {
     return(list(raw=raw))
 }
 
-read.sas7bdat <- function(file, debug=FALSE) {
-
-    dbg <- 0
+read.sas7bdat <- function(file) {
 
     if(inherits(file, "connection") && isOpen(file, "read")) {
         con <- file
@@ -84,20 +82,12 @@ read.sas7bdat <- function(file, debug=FALSE) {
         stop("invalid 'file' argument")
     }
 
-    fail <- function(msg) {
-        if(debug == FALSE)
-            stop(msg)
-        ret <- list(msg = msg, env = parent.frame())
-        class(ret) <- "sas7bdat-fail"
-        return(ret)
-    }
-
     # Check magic number
     header <- readBin(con, "raw", 1024, 1)
     if(length(header) < 1024)
-        return(fail("header too short (not a sas7bdat file?)"))
+        stop("header too short (not a sas7bdat file?)")
     if(!check_magic_number(header))
-        return(fail(paste("magic number mismatch", BUGREPORT)))
+        stop(paste("magic number mismatch", BUGREPORT))
 
     # Timestamp is epoch 01/01/1960
     chron <- try(library("chron", quietly=TRUE), silent=TRUE)
@@ -108,18 +98,16 @@ read.sas7bdat <- function(file, debug=FALSE) {
 
     page_size   <- read_int(header, 200, 4)
     if(page_size < 0)
-        return(fail(paste("page size is negative", BUGREPORT)))
+        stop(paste("page size is negative", BUGREPORT))
 
     page_count  <- read_int(header, 204, 4)
     if(page_count < 1)
-        return(fail(paste("page count is not positive", BUGREPORT)))
+        stop(paste("page count is not positive", BUGREPORT))
 
     SAS_release <- read_str(header, 216, 8)
     SAS_host    <- read_str(header, 224, 8)
     if(!(SAS_host %in% KNOWNHOST))
-        return(fail(paste("unknown host", SAS_host, BUGREPORT)))
-
-    if(debug == (dbg <- dbg + 1)) return(fail(paste("debug:", debug)))
+        stop(paste("unknown host", SAS_host, BUGREPORT))
 
     # Read pages
     pages <- list()
@@ -134,8 +122,8 @@ read.sas7bdat <- function(file, debug=FALSE) {
         pages[[page_num]]$type <- read_int(pages[[page_num]]$data, 17, 1)
 
         if(!(pages[[page_num]]$type %in% c(0,1,2,4)))
-            return(fail(paste("page", page_num, "has unknown type:",
-                pages[[page_num]]$type, BUGREPORT)))
+            stop(paste("page", page_num, "has unknown type:",
+                pages[[page_num]]$type, BUGREPORT))
 
         # There isn't enough information in the current data collection to 
         # decipher the purpose of this page type. But, it doesn't appear 
@@ -161,8 +149,6 @@ read.sas7bdat <- function(file, debug=FALSE) {
             }
         }
 
-        if(debug == (dbg <- dbg + 1)) return(fail(paste("debug:", debug)))
-
         # Parse subheaders
         # If we encounter a page with data (type 1 or 2), then all required subheaders
         # should be present at this point. Of course, it's possible that pages with 
@@ -172,8 +158,8 @@ read.sas7bdat <- function(file, debug=FALSE) {
 
             row_size <- get_subhs(subhs, SUBH_ROWSIZE)
             if(length(row_size) != 1)
-                return(fail(paste("found", length(row_size),
-                    "row size subheaders where 1 expected", BUGREPORT)))
+                stop(paste("found", length(row_size),
+                    "row size subheaders where 1 expected", BUGREPORT))
             row_size <- row_size[[1]]
             row_length   <- read_int(row_size$raw, 20, 4)
             row_count    <- read_int(row_size$raw, 24, 4)
@@ -182,8 +168,8 @@ read.sas7bdat <- function(file, debug=FALSE) {
 
             col_size <- get_subhs(subhs, SUBH_COLSIZE)
             if(length(col_size) != 1)
-                return(fail(paste("found", length(col_size),
-                    "column size subheaders where 1 expected", BUGREPORT)))
+                stop(paste("found", length(col_size),
+                    "column size subheaders where 1 expected", BUGREPORT))
             col_size <- col_size[[1]]
             col_count_6  <- read_int(col_size$raw, 4, 4)
             col_count    <- col_count_6
@@ -194,13 +180,13 @@ read.sas7bdat <- function(file, debug=FALSE) {
             # Read column information
             col_text <- get_subhs(subhs, SUBH_COLTEXT)
             if(length(col_text) != 1)
-                return(fail(paste("found", length(col_text),
-                    "column text subheaders where 1 expected", BUGREPORT)))
+                stop(paste("found", length(col_text),
+                    "column text subheaders where 1 expected", BUGREPORT))
             col_text <- col_text[[1]]
 
             col_attr <- get_subhs(subhs, SUBH_COLATTR)            
             if(length(col_attr) < 1) {
-                return(fail(paste("no column attribute subheader found", BUGREPORT)))
+                stop(paste("no column attribute subheader found", BUGREPORT))
             } else if(length(col_attr) == 1) {
                 col_attr <- col_attr[[1]]
             } else {
@@ -209,17 +195,17 @@ read.sas7bdat <- function(file, debug=FALSE) {
 
             col_name <- get_subhs(subhs, SUBH_COLNAME)
             if(length(col_name) != 1) 
-                return(fail(paste("found", length(col_name),
-                    "column name subheaders where 1 expected", BUGREPORT)))
+                stop(paste("found", length(col_name),
+                    "column name subheaders where 1 expected", BUGREPORT))
             col_name <- col_name[[1]]
 
             col_labs <- get_subhs(subhs, SUBH_COLLABS)
             if(length(col_labs) < 1)
                 col_labs <- NULL
             if(length(col_labs) > 0 && length(col_labs) < col_count)
-                return(fail(paste("found", length(col_labs),
+                stop(paste("found", length(col_labs),
                     "column label subheaders where", col_count,
-                    "expected", BUGREPORT)))
+                    "expected", BUGREPORT))
             
             for(i in 1:col_count) {
                 col_info[[i]] <- list()
@@ -261,12 +247,10 @@ read.sas7bdat <- function(file, debug=FALSE) {
             subhs_parsed <- TRUE
         }
 
-        if(debug == (dbg <- dbg + 1)) return(fail(paste("debug:", debug)))
-
         # Read data
         if(pages[[page_num]]$type %in% c(1, 2)) {
             if(!subhs_parsed)
-                return(fail(paste("subheaders were not found", BUGREPORT)))
+                stop(paste("subheaders were not found", BUGREPORT))
             if(pages[[page_num]]$type == 2) {
                 row_count_p <- row_count_fp
                 base <- 24 + pages[[page_num]]$subh_count * 12
@@ -301,7 +285,7 @@ read.sas7bdat <- function(file, debug=FALSE) {
     if(close_con)
         close(con)
 
-    if(debug == (dbg <- dbg + 1)) return(fail(paste("debug:", debug)))
-
-    return(as.data.frame(data))
+    data <- as.data.frame(data)
+    attr(data, 'meta') <- col_info
+    return(data)
 }
