@@ -12,7 +12,6 @@ read.sas7bdat(file)
 \arguments{
   \item{file}{Path to a file or an URL.}
 }
-}
 \details{
    This function is experimental and may not work for all SAS databases having the extension \code{sas7bdat}.
 }

@@ -71,7 +71,7 @@ splice_col_attr_subheaders <- function(col_attr) {
 }
 
 read.sas7bdat <- function(file) {
-
+    require('chron')
     if(inherits(file, "connection") && isOpen(file, "read")) {
         con <- file
         close_con <- FALSE
@@ -90,11 +90,8 @@ read.sas7bdat <- function(file) {
         stop(paste("magic number mismatch", BUGREPORT))
 
     # Timestamp is epoch 01/01/1960
-    chron <- try(library("chron", quietly=TRUE), silent=TRUE)
-    if(!inherits(chron, "try-error")) {
-        timestamp <- read_flo(header,164,8)
-        timestamp <- chron(timestamp, origin=c(month=1, day=1, year=1960))
-    }
+    timestamp <- read_flo(header,164,8)
+    timestamp <- chron(timestamp, origin=c(month=1, day=1, year=1960)) 
 
     page_size   <- read_int(header, 200, 4)
     if(page_size < 0)
