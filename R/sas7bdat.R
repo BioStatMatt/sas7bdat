@@ -283,6 +283,6 @@ read.sas7bdat <- function(file) {
         close(con)
 
     data <- as.data.frame(data)
-    attr(data, 'meta') <- col_info
+    attr(data, 'column.info') <- col_info
     return(data)
 }
