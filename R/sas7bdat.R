@@ -172,7 +172,7 @@ read.sas7bdat <- function(file) {
             col_count    <- col_count_6
 
             if(col_count_7 != col_count_6)
-                warning(paste("column count mismatch" , BUGREPORT))
+                warning(paste("column count mismatch" , CAUTION))
 
             # Read column information
             col_text <- get_subhs(subhs, SUBH_COLTEXT)
