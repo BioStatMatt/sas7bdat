@@ -16,7 +16,7 @@ These data are a collection of internet resources for SAS database files in the 
     \item{\code{uncompressed}}{a numeric vector, file size (bytes)}
     \item{\code{gzip}}{a numeric vector, gzip compressed file size (bytes)}
     \item{\code{bzip2}}{a numeric vector, bzip2 compressed file size (bytes)}
-    \item{\code{xz}}{a character vector, xz compressed file size (bytes)}
+    \item{\code{xz}}{a numeric vector, xz compressed file size (bytes)}
     \item{\code{url}}{a character vector, the Universal Resource Locator}
   }
 }
