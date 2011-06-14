@@ -11,6 +11,8 @@ Contents
 - `SAS7BDAT Subheaders`_
 - `SAS7BDAT Packed Binary Data`_
 - `Platform Differences`_
+- `Compression Data`_
+- `Software Prototype`_
 - `ToDo`_
 
 Introduction
@@ -308,6 +310,37 @@ The test files referenced in ``data/sources.csv`` were examined over a period of
 In particular, the files ``natlerr1944.sas7bdat``, ``natlerr2006.sas7bdat`` appear to be generated on the 'SunOS' platform. The header in these files appear to be 8196 bytes, rather than the 1024 seen on Microsoft Windows platforms.
 
 The files ``cfrance2.sas7bdat``, ``cfrance.sas7bdat``, ``coutline.sas7bdat``,  ``gfrance2.sas7bdat``, ``gfrance.sas7bdat``, ``goutline.sas7bdat``, ``xfrance2.sas7bdat``, ``xfrance.sas7bdat``, ``xoutline.sas7bdat`` appear to be generated on a 'Linux' system.
+
+Compression Data
+================
+
+The table below presents the results of compression tests on a collection of 142 SAS7BDAT data files (sources in ``data/``). The 'type' field represents the type of compression, 'ctime' is the compression time (in seconds), 'dtime' is the decompression time, and the 'compression ratio' field holds the cumulative disk usage (in megabytes) before and after compression. Although the ``xz`` algorithm requires significantly more time to compress these data, the decompression time is on par with gzip.
+
+=============	======	======	=========================
+type		ctime	dtime	compression ratio
+=============	======	====== 	=========================
+gzip -9		76.7s	2.6s	541M / 30.3M = 17.9
+bzip2 -9	92.7s	11.2s	541M / 19.0M = 28.5
+xz -9		434.2s	2.7s	541M / 12.8M = 42.3
+=============	======	======	=========================
+
+
+Software Prototype
+==================
+
+The prototype program for reading SAS7BDAT formatted files is implemented entirely in R (see file ``src/sas7bdat.R``). Files not recognized as having been generated under a Microsoft Windows platform are rejected (for now). Implementation of the ``read.sas7bdat`` function should be considered a 'reference implementation', and not one designed with performance in mind. 
+
+There are certain advantages and disadvantages to developing a prototype of this nature in R.
+
+Advantages:
+
+1. R is an interpreted language with built-in debugger. Hence, experimental routines may be implemented and debugged quickly and interactively, without the need of external compiler or debugger tools (e.g. gcc, gdb).
+2. R programs are portable across a variety of computing platforms. This is especially important in the present context, because manipulating files stored on disk is a platform-specific task. Platform-specific operations are abstracted from the R user.
+
+Disadvantages:
+
+1. Manipulating binary (raw) data in R is a relatively new capability. The best tools and practices for binary data operations are not as developed as those for other data types.
+2. Interpreted code is often much less efficient than compiled code. This is not major disadvantage for prototype implementations because human code development is far less efficient than the R interpreter. Gains made in efficient code development using an interpreted language far outweigh benefit of compiled languages.
 
 ToDo
 ====
