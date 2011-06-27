@@ -284,5 +284,8 @@ read.sas7bdat <- function(file) {
 
     data <- as.data.frame(data)
     attr(data, 'column.info') <- col_info
+    attr(data, 'timestamp')   <- timestamp
+    attr(data, 'SAS.release') <- SAS_release
+    attr(data, 'SAS.host')    <- SAS_host
     return(data)
 }
