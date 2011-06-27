@@ -53,7 +53,7 @@
 \title{SAS7BDAT Database Binary Format%
   \phantomsection%
   \label{sas7bdat-database-binary-format}}
-\author{Matthew S. Shotwell}
+\author{}
 \date{}
 \maketitle
 
@@ -1668,6 +1668,8 @@ The test files referenced in \texttt{data/sources.csv} were examined over a peri
 In particular, the files \texttt{natlerr1944.sas7bdat}, \texttt{natlerr2006.sas7bdat} appear to be generated on the 'SunOS' platform. The header in these files appear to be 8196 bytes, rather than the 1024 seen on Microsoft Windows platforms.
 
 The files \texttt{cfrance2.sas7bdat}, \texttt{cfrance.sas7bdat}, \texttt{coutline.sas7bdat},  \texttt{gfrance2.sas7bdat}, \texttt{gfrance.sas7bdat}, \texttt{goutline.sas7bdat}, \texttt{xfrance2.sas7bdat}, \texttt{xfrance.sas7bdat}, \texttt{xoutline.sas7bdat} appear to be generated on a 'Linux' system.
+
+Text may appear in non-ASCII compatible, partially ASCII compatible, or multi-byte encodings. In particular, Kasper Sorenson discovered some text that appears to be encoded using the Windows-1252 'code page'.
 
 
 %___________________________________________________________________________
