@@ -286,26 +286,28 @@ SAS7BDAT Packed Binary Data
 
 SAS7BDAT packed binary data are stored by rows, where the size of a row (in bytes) is defined by the `row size subheader`_. When multiple rows occur on a single page, they are immediately adjacent. When a database contains many rows, it is typical that the collection of rows (i.e. their data) is evenly distributed to a number of 'data' pages. However, in test files, no single row's data is broken across two or more pages. A single data row is parsed by interpreting the binary data according to the collection of column attributes contained in the `column attributes subheader`_. Binary data can be interpreted in two ways, as ASCII characters, or as floating point numbers. The column width attribute specifies the number of bytes associated with a column. For character data, this interpretation is straight-forward. For numeric data, interpretation of the column width is more complex.
 
-The common binary representation of floating point numbers has three parts; the sign (s), exponent (e), and mantissa (m). The corresponding floating point number is ``s * m ^ e``. Under the IEEE 754 floating point standard, the sign requires 1 bit, the exponent requires 11, and the mantissa requires 52 bits, for a total of 8 bytes. In SAS7BDAT file, numeric quantities can be 3, 4, 5, 6, 7, or 8 bytes in length. For numeric quantities using less than 8 bytes, some number of bytes are absent from the most significant part of the mantissa. The smaller width mantissa means that the range of possible values is restricted. The table of `numeric binary formats`_ below describes how bits are distributed among the six possible column widths in SAS7BDAT files. 
+The common binary representation of floating point numbers has three parts; the sign (``s``), exponent (``e``), and mantissa (``m``). The corresponding floating point number is ``s * m * b ^ e``, where ``b`` is the base (2 for binary, 10 for decimal). Under the IEEE 754 floating point standard, the sign, exponent, and mantissa are encoded by 1, 11, and 52 bits respectively, totaling 8 bytes. In SAS7BDAT file, numeric quantities can be 3, 4, 5, 6, 7, or 8 bytes in length. For numeric quantities of less than 8 bytes, the remaining number of bytes are truncated from the least significant part of the mantissa. Hence, the minimum and maximum numeric values are identical for all byte lengths, but shorter numeric values have reduced precision.
+
+Reduction in precision is characterized by the largest integer such that itself and all smaller integers have an exact representation, denoted ``M``. At best, all integers greater than ``M`` are approximated to the nearest multiple of ``b``. The table of `numeric binary formats`_ below lists ``M`` values and describes how bits are distributed among the six possible column widths in SAS7BDAT files, and lists.
 
 Numeric Binary Formats
 ----------------------
 
-========        ======  ======  ======  ======  ======  ==========
-size		24bit	32bit	40bit	48bit	56bit	64bit [1]_
-========        ======  ======  ======  ======  ======  ==========
-bytes		3	4	5	6	7	8
-sign		1	1	1	1	1	1
-exponent	11	11	11	11	11	11
-mantissa	12	20	28	36	44	52
-========        ======  ======  ======  ======  ======  ==========
-
-.. [1] Only 64bit is IEEE 754 compliant!
+=====     =====  ====  ========  ========  ================
+size      bytes  sign  exponent  mantissa  ``M``	
+=====     =====  ====  ========  ========  ================
+24bit     3      1     11        12                    8192
+32bit     4      1     11        20                 2097152
+40bit     5      1     11        28               536870912
+48bit     6      1     11        36            137438953472
+56bit     7      1     11        44          35184372088832
+64bit     8      1     11        52        9007199254740990
+=====     =====  ====  ========  ========  ================
 
 Platform Differences
 ====================
 
-The test files referenced in ``data/sources.csv`` were examined over a period of time. Files with non-Microsoft Windows markings were only observed late into the writing of this document. Consequently (but not intentionally), the SAS7BDAT description above is specific to SAS datasets generated on the most commonly observed platform: Microsoft Windows. The format of SAS7BDAT files generated on other platforms are formatted differently. 
+The test files referenced in ``data/sources.csv`` were examined over a period of time. Files with non-Microsoft Windows markings were only observed late into the writing of this document. Consequently (but not intentionally), the SAS7BDAT description above is specific to SAS datasets generated on the most commonly observed platform: Microsoft Windows. SAS7BDAT files generated on other platforms are formatted differently. 
 
 In particular, the files ``natlerr1944.sas7bdat``, ``natlerr2006.sas7bdat`` appear to be generated on the 'SunOS' platform. The header in these files appear to be 8196 bytes, rather than the 1024 seen on Microsoft Windows platforms.
 
