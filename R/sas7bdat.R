@@ -91,7 +91,7 @@ read.sas7bdat <- function(file) {
 
     # Timestamp is epoch 01/01/1960
     timestamp <- read_flo(header,164,8)
-    timestamp <- chron(timestamp, origin=c(month=1, day=1, year=1960)) 
+    timestamp <- chron(timestamp, origin.=c(month=1, day=1, year=1960)) 
 
     page_size   <- read_int(header, 200, 4)
     if(page_size < 0)
