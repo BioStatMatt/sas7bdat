@@ -20,7 +20,7 @@
 %%% User specified packages and stylesheets
     \usepackage{fullpage}
     \usepackage{Sweave}
-    \VignetteIndexEntry{sas7bdat}
+    %\VignetteIndexEntry{sas7bdat}
 
 %%% Fallback definitions for Docutils-specific commands
 
