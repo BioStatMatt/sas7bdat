@@ -21,7 +21,7 @@ CAUTION   <- "please verify data correctness"
 KNOWNHOST <- c("WIN_PRO", "WIN_NT", "WIN_NTSV", "WIN_SRV",
                "WIN_ASRV", "XP_PRO", "XP_HOME", "W32_VSPRO",
                "NET_ASRV", "NET_DSRV", "NET_SRV", "WIN_98",
-               "W32_VSPR", "WIN", "WIN_95")
+               "W32_VSPR", "WIN", "WIN_95", "X64_VSPR")
 
 # Subheader 'signatures'
 SUBH_ROWSIZE <- as.raw(c(0xf7,0xf7,0xf7,0xf7))
@@ -30,6 +30,10 @@ SUBH_COLTEXT <- as.raw(c(0xFD,0xFF,0xFF,0xFF))
 SUBH_COLATTR <- as.raw(c(0xFC,0xFF,0xFF,0xFF))
 SUBH_COLNAME <- as.raw(c(0xFF,0xFF,0xFF,0xFF))
 SUBH_COLLABS <- as.raw(c(0xFE,0xFB,0xFF,0xFF))
+
+#Alignment
+ALIGN_64     <- as.raw(c(0x33,0x33))
+ALIGN_32     <- as.raw(c(0x32,0x22))
 
 # Magic number
 MAGIC     <- as.raw(c(0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
@@ -89,20 +93,33 @@ read.sas7bdat <- function(file) {
     if(!check_magic_number(header))
         stop(paste("magic number mismatch", BUGREPORT))
 
+    # Check for 32 or 64 bit alignment
+    align <- read_raw(header, 35, 2)
+    if(identical(align, ALIGN_32)) {
+        halign <- 0 
+    } else if(identical(align, ALIGN_64)) {
+        halign <- 4 
+    } else {
+        stop(paste("unrecognized alignment code",
+            paste(align, collapse=''), BUGREPORT))
+    }
+    
     # Timestamp is epoch 01/01/1960
-    timestamp <- read_flo(header,164,8)
+    timestamp <- read_flo(header,164 + halign,8)
     timestamp <- chron(timestamp, origin.=c(month=1, day=1, year=1960)) 
 
-    page_size   <- read_int(header, 200, 4)
+
+    page_size   <- read_int(header, 200 + halign, 4)
     if(page_size < 0)
         stop(paste("page size is negative", BUGREPORT))
 
-    page_count  <- read_int(header, 204, 4)
+    page_count  <- read_int(header, 204 + halign, 4)
     if(page_count < 1)
         stop(paste("page count is not positive", BUGREPORT))
+    
 
-    SAS_release <- read_str(header, 216, 8)
-    SAS_host    <- read_str(header, 224, 8)
+    SAS_release <- read_str(header, 216 + halign, 8)
+    SAS_host    <- read_str(header, 224 + halign, 8)
     if(!(SAS_host %in% KNOWNHOST))
         stop(paste("unknown host", SAS_host, BUGREPORT))
 
