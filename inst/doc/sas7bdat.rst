@@ -275,20 +275,49 @@ offset		length	conf.	description
 10		2	medium	LE uint, column type (01-num, 02-chr)
 ==============  ======  ======  ===============================================
 
-Column Label Subheader
-----------------------
+Column Format and Label Subheader
+---------------------------------
 
-The column label subheader contains a column label pointer to the offset of a column label **relative to the `column text subheader`_**. Since the column label subheader only contains information regarding a single column, there are typically as many column label subheaders as columns.
+The column format and label subheader contains pointers to a column format and label **relative to the `column text subheader`_**. Since the column label subheader only contains information regarding a single column, there are typically as many of these subheaders as columns.
 
 ==============  ======  ======  ===============================================
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary, signature FEFBFFFF
-4		38	low	*????????????*
+4		32	low	*????????????*
+36		2	medium	LE uint, column format offset wrt FDFFFFFF
+38		2	medium  LE uint, column format length
+40		2	low	*????????????*
 42		2	medium	LE uint, column label offset wrt FDFFFFFF
 44		2	medium	LE uint, column label length
 46		6	low	*????????????*
 ==============  ======  ======  ===============================================
+
+Column List Subheader
+---------------------
+
+The purpose of this subheader is not clear. But the structure is partly identified.
+
+==============  ======  ======  ===============================================
+offset		length	conf.	description
+==============  ======  ======  ===============================================
+0		4	medium	binary, signature FEFFFFFF
+4		2	medium	LE uint, length of remaining subheader
+6		6	low	*????????????* 
+12		2	medium	LE uint, length of remaining subheader
+14		2	low	*????????????* 
+16		2	low	usually equals CC (ascii or hex?)
+18		2	medium	LE uint, length of column list := CL
+20		2	low	usually 1 (ascii or hex?)
+22		2	low	usually equals CC (ascii or hex?)
+24		6	low	*????????????*
+30		2*CL	medium	`column list values`_ (see below)
+30+2*CL		8	low	usually zeros
+==============  ======  ======  ===============================================
+
+Column List Values
+++++++++++++++++++
+These values are 2 byte, little-endian signed integers. Each value is between -CC and CC. The significance of signedness and ordering is unknown. One theory is that these values indicate the sorting order of columns.
 
 SAS7BDAT Packed Binary Data
 ===========================

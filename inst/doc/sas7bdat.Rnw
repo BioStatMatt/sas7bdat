@@ -1468,13 +1468,13 @@ LE uint, column type (01-num, 02-chr)
 
 %___________________________________________________________________________
 
-\subsection*{Column Label Subheader%
+\subsection*{Column Format and Label Subheader%
   \phantomsection%
-  \addcontentsline{toc}{subsection}{Column Label Subheader}%
-  \label{column-label-subheader}%
+  \addcontentsline{toc}{subsection}{Column Format and Label Subheader}%
+  \label{column-format-and-label-subheader}%
 }
 
-The column label subheader contains a column label pointer to the offset of a column label \textbf{relative to the `column text subheader`\_}. Since the column label subheader only contains information regarding a single column, there are typically as many column label subheaders as columns.
+The column format and label subheader contains pointers to a column format and label \textbf{relative to the `column text subheader`\_}. Since the column label subheader only contains information regarding a single column, there are typically as many of these subheaders as columns.
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
@@ -1519,7 +1519,37 @@ binary, signature FEFBFFFF
 
 4
  & 
+32
+ & 
+low
+ & 
+\emph{????????????}
+ \\
+\hline
+
+36
+ & 
+2
+ & 
+medium
+ & 
+LE uint, column format offset wrt FDFFFFFF
+ \\
+\hline
+
 38
+ & 
+2
+ & 
+medium
+ & 
+LE uint, column format length
+ \\
+\hline
+
+40
+ & 
+2
  & 
 low
  & 
@@ -1557,6 +1587,180 @@ low
  \\
 \hline
 \end{longtable}
+
+
+%___________________________________________________________________________
+
+\subsection*{Column List Subheader%
+  \phantomsection%
+  \addcontentsline{toc}{subsection}{Column List Subheader}%
+  \label{column-list-subheader}%
+}
+
+The purpose of this subheader is not clear. But the structure is partly identified.
+
+\leavevmode
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable}[c]{|p{0.179\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.563\DUtablewidth}|}
+\hline
+\textbf{%
+offset
+} & \textbf{%
+length
+} & \textbf{%
+conf.
+} & \textbf{%
+description
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+offset
+} & \textbf{%
+length
+} & \textbf{%
+conf.
+} & \textbf{%
+description
+} \\
+\hline
+\endhead
+\multicolumn{4}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+0
+ & 
+4
+ & 
+medium
+ & 
+binary, signature FEFFFFFF
+ \\
+\hline
+
+4
+ & 
+2
+ & 
+medium
+ & 
+LE uint, length of remaining subheader
+ \\
+\hline
+
+6
+ & 
+6
+ & 
+low
+ & 
+\emph{????????????}
+ \\
+\hline
+
+12
+ & 
+2
+ & 
+medium
+ & 
+LE uint, length of remaining subheader
+ \\
+\hline
+
+14
+ & 
+2
+ & 
+low
+ & 
+\emph{????????????}
+ \\
+\hline
+
+16
+ & 
+2
+ & 
+low
+ & 
+usually equals CC (ascii or hex?)
+ \\
+\hline
+
+18
+ & 
+2
+ & 
+medium
+ & 
+LE uint, length of column list := CL
+ \\
+\hline
+
+20
+ & 
+2
+ & 
+low
+ & 
+usually 1 (ascii or hex?)
+ \\
+\hline
+
+22
+ & 
+2
+ & 
+low
+ & 
+usually equals CC (ascii or hex?)
+ \\
+\hline
+
+24
+ & 
+6
+ & 
+low
+ & 
+\emph{????????????}
+ \\
+\hline
+
+30
+ & 
+2*CL
+ & 
+medium
+ & 
+\hyperref[column-list-values]{column list values} (see below)
+ \\
+\hline
+
+30+2*CL
+ & 
+8
+ & 
+low
+ & 
+usually zeros
+ \\
+\hline
+\end{longtable}
+
+
+%___________________________________________________________________________
+
+\subsubsection*{Column List Values%
+  \phantomsection%
+  \addcontentsline{toc}{subsubsection}{Column List Values}%
+  \label{column-list-values}%
+}
+
+These values are 2 byte, little-endian signed integers. Each value is between -CC and CC. The significance of signedness and ordering is unknown. One theory is that these values indicate the sorting order of columns.
 
 
 %___________________________________________________________________________

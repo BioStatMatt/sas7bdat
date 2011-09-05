@@ -31,6 +31,7 @@ SUBH_COLTEXT <- as.raw(c(0xFD,0xFF,0xFF,0xFF))
 SUBH_COLATTR <- as.raw(c(0xFC,0xFF,0xFF,0xFF))
 SUBH_COLNAME <- as.raw(c(0xFF,0xFF,0xFF,0xFF))
 SUBH_COLLABS <- as.raw(c(0xFE,0xFB,0xFF,0xFF))
+SUBH_COLLIST <- as.raw(c(0xFE,0xFF,0xFF,0xFF))
 
 #Alignment
 ALIGN_64     <- as.raw(c(0x33,0x33))
@@ -238,8 +239,13 @@ read.sas7bdat <- function(file) {
                     #in an "amendment page" (page type 04)
                 }
         
-                # Read column labels
+                # Read column formats and labels
                 if(!is.null(col_labs)) {
+                    base <- 36
+                    off  <- read_int(col_labs[[i]]$raw, base, 2) + 4
+                    len  <- read_int(col_labs[[i]]$raw, base + 2, 2)
+                    if(len > 0)
+                        col_info[[i]]$format <- read_str(col_text$raw, off, len)
                     base <- 42
                     off  <- read_int(col_labs[[i]]$raw, base, 2) + 4
                     len  <- read_int(col_labs[[i]]$raw, base + 2, 2)
@@ -259,6 +265,30 @@ read.sas7bdat <- function(file) {
                 if(col$length > 0)
                     data[[col$name]] <- vector(col$type, length=row_count)
             }
+
+            # Read column list information
+            #col_list <- get_subhs(subhs, SUBH_COLLIST) 
+            #if(length(col_list) != 1)
+            #    stop(paste("found", length(col_list),
+            #        "column list subheaders where 1 expected", BUGREPORT))
+            #col_list_sig  <- read_raw(col_list[[1]]$raw, 0, 4)
+            #col_list_len0 <- read_int(col_list[[1]]$raw, 4, 2)
+            #col_list_unk0 <- read_raw(col_list[[1]]$raw, 6, 6) 
+            #col_list_len1 <- read_int(col_list[[1]]$raw, 12, 2)
+            #col_list_unk1 <- read_raw(col_list[[1]]$raw, 14, 2)
+            #col_list_col0 <- read_int(col_list[[1]]$raw, 16, 2)
+            #col_list_cll  <- read_int(col_list[[1]]$raw, 18, 2)
+            #if(col_list_cll < 0)
+            #    stop(paste("invalid column list count:",
+            #       col_list_cll, BUGREPORT))
+            #col_list_one  <- read_raw(col_list[[1]]$raw, 20, 2)
+            #col_list_col1 <- read_int(col_list[[1]]$raw, 22, 2)
+            #col_list_unk2 <- read_raw(col_list[[1]]$raw, 24, 6)
+            #col_list_cl   <- list()
+            #for(cll in 1:col_list_cll)
+            #    col_list_cl[[cll]] <- read_int(col_list[[1]]$raw, 30+(cll-1)*2, 2)
+            #col_list_unk3 <- read_raw(col_list[[1]]$raw, 30+col_list_cll*2, 8)
+
             subhs_parsed <- TRUE
         }
 
