@@ -1,0 +1,60 @@
+\documentclass{article}
+\usepackage{natbib}
+\begin{document}
+%tools and strategies for reverse engineering statistical data files
+
+\section{Introduction}
+Reverse engineering is much like forensics. At a point in the past, the process under investigation was conceived and implemented. The consequences are observable, but the implementation details are lost, or concealed. Forensics, and reverse engineering venture to recover the details.
+
+%Rewards and risks
+The risks of entering into a reverse engineering venture can be considerable. Indeed, the principal risk is failure to sufficiently recover the details that explain the process under investigation. This is compounded by the consequences that may be imposed regarless of success or failure. For instance, merely the attempting to reverse engineer certain software may be in violation of the associated end-user license agreement. In an extreme example, an attempt to `crack' encrypted communications through reverse engineering may be considered illegal.
+
+%Baggerly and Coombes "forensic bioinformatics"
+
+%Statistical data files are regular computer files that contain structured data, such as a table, or key-value list. The data are structred according to a file {\it format}. The formatted data may be human readable, that is, data are represented by character strings ({\it e.g.,} comma separated values). Alternatively, or in addition, data may be stored in a binary representation ({\it e.g.,} XBase and dBase formats, \cite{XBase2010}).
+
+%@misc{XBase2010,
+%    author = {Erik Bachmann},
+%    title = {XBase (and dBase) File Format Description},
+%    publisher = {Clickety Click Software},
+%    year = {2010},
+%    note = {This is an electronic document. Date retrieved: August 12, 2011.},
+%    url = {http://www.clicketyclick.dk/databases/xbase/format/index.html}
+%}
+
+%Statistical data files whose format descriptions are distributed under commercial license, or otherwise unpublished, impose a barrier to reproducible research. Because such formats generally require the user to purchase and learn to operate an associated software package, the barriers are financial and practical in nature. In the worst case, the necessary software may cease to be supported, or become unavailable, rendering useless any data in the associated format.
+
+%
+\section{Prerequisites}
+
+%This document assumes familiarity with some modern computer concepts, such as file input and output, binary representations of integers, floating-point numbers, and character strings, and counting in the binary (base 2), octal (base 8), and hexadecimal (base 16) number systems. The following discussion references several resources to help prepare the would-be reverse engineer. However, even these resources assume the reader is comfortable with basic computer concepts, for instance, the meaning of {\it bit} and {\it byte}. 
+
+% Perhaps reference Knuth, The Art of Computer Programming (no, don't think this reference is useful)
+
+%Although \citep{Goldberg}'s popular discussion of computer representations of floating-point numbers is primarily concerned with rounding errors, the article introduces the topic nicely.  
+
+\section{Basics}
+%counting: decimal, hex, octal, binary
+%macro structure: header-data paradigm, offset-length
+
+
+%@article{Goldberg1991,
+%    author = {Goldberg, David},
+%    title = {What every computer scientist should know about floating-point arithmetic},
+%    journal = {ACM Computing Surveys},
+%    number = {1},
+%    pages = {5--48},
+%    volume = {23},
+%    year = {1991}
+%}
+
+%visual and automated detection of floating point data
+%%floating point representations
+%%statistical properties
+
+%visual and automated detection of encoded character data
+%%character representations
+
+%alignment issues
+%%C structures can have different sizes, depending on the compiler and platform
+\end{document}
