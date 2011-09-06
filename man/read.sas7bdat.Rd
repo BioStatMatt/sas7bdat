@@ -18,6 +18,7 @@ The functionality in this package is EXPERIMENTAL and may not work for all SAS d
 \value{
    A data frame corresponding to the SAS database. The returned data frame has an \code{column.info} attribute, which contains additional information about each field in the data frame, respectively. The \code{column.info} attribute is a list of lists, containing zero or more of the following:
    \item{name}{The field name}
+   \item{format}{The field display format}
    \item{label}{The field label (usually a longer description)}
    \item{offset}{The field offset in packed binary row data (bytes)}
    \item{length}{The field length (bytes)}
