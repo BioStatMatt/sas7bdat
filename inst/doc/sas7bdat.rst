@@ -278,7 +278,7 @@ offset		length	conf.	description
 Column Format and Label Subheader
 ---------------------------------
 
-The column format and label subheader contains pointers to a column format and label **relative to the `column text subheader`_**. Since the column label subheader only contains information regarding a single column, there are typically as many of these subheaders as columns.
+The column format and label subheader contains pointers to a column format and label **relative to the `column text subheader`_**. Since the column label subheader only contains information regarding a single column, there are typically as many of these subheaders as columns. The structure of column format pointers was contributed by Clint Cummins. 
 
 ==============  ======  ======  ===============================================
 offset		length	conf.	description
@@ -296,7 +296,7 @@ offset		length	conf.	description
 Column List Subheader
 ---------------------
 
-The purpose of this subheader is not clear. But the structure is partly identified.
+The purpose of this subheader is not clear. But the structure is partly identified. Information related to this subheader was contributed by Clint Cummins.
 
 ==============  ======  ======  ===============================================
 offset		length	conf.	description
@@ -306,10 +306,10 @@ offset		length	conf.	description
 6		6	low	*????????????* 
 12		2	medium	LE uint, length of remaining subheader
 14		2	low	*????????????* 
-16		2	low	usually equals CC (ascii or hex?)
+16		2	low	LE uint, usually equals CC
 18		2	medium	LE uint, length of column list := CL
-20		2	low	usually 1 (ascii or hex?)
-22		2	low	usually equals CC (ascii or hex?)
+20		2	low	LE uint, usually 1
+22		2	low	LE uint, usually equals CC
 24		6	low	*????????????*
 30		2*CL	medium	`column list values`_ (see below)
 30+2*CL		8	low	usually zeros

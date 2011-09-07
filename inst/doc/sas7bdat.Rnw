@@ -1474,7 +1474,7 @@ LE uint, column type (01-num, 02-chr)
   \label{column-format-and-label-subheader}%
 }
 
-The column format and label subheader contains pointers to a column format and label \textbf{relative to the `column text subheader`\_}. Since the column label subheader only contains information regarding a single column, there are typically as many of these subheaders as columns.
+The column format and label subheader contains pointers to a column format and label \textbf{relative to the `column text subheader`\_}. Since the column label subheader only contains information regarding a single column, there are typically as many of these subheaders as columns. The structure of column format pointers was contributed by Clint Cummins.
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
@@ -1597,7 +1597,7 @@ low
   \label{column-list-subheader}%
 }
 
-The purpose of this subheader is not clear. But the structure is partly identified.
+The purpose of this subheader is not clear. But the structure is partly identified. Information related to this subheader was contributed by Clint Cummins.
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
@@ -1686,7 +1686,7 @@ low
  & 
 low
  & 
-usually equals CC (ascii or hex?)
+LE uint, usually equals CC
  \\
 \hline
 
@@ -1706,7 +1706,7 @@ LE uint, length of column list := CL
  & 
 low
  & 
-usually 1 (ascii or hex?)
+LE uint, usually 1
  \\
 \hline
 
@@ -1716,7 +1716,7 @@ usually 1 (ascii or hex?)
  & 
 low
  & 
-usually equals CC (ascii or hex?)
+LE uint, usually equals CC
  \\
 \hline
 
