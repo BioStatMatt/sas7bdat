@@ -179,7 +179,8 @@ read.sas7bdat <- function(file) {
             row_size <- row_size[[1]]
             row_length   <- read_int(row_size$raw, 20, 4)
             row_count    <- read_int(row_size$raw, 24, 4)
-            col_count_7  <- read_int(row_size$raw, 36, 4)
+            col_count_p1 <- read_int(row_size$raw, 36, 4)
+            col_count_p2 <- read_int(row_size$raw, 40, 4)
             row_count_fp <- read_int(row_size$raw, 60, 4)
 
             col_size <- get_subhs(subhs, SUBH_COLSIZE)
@@ -190,7 +191,7 @@ read.sas7bdat <- function(file) {
             col_count_6  <- read_int(col_size$raw, 4, 4)
             col_count    <- col_count_6
 
-            if(col_count_7 != col_count_6)
+            if((col_count_p1 + col_count_p2) != col_count_6)
                 warning(paste("column count mismatch" , CAUTION))
 
             # Read column information

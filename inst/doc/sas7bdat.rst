@@ -173,8 +173,8 @@ offset		length	conf.	description
 4		16	low	*????????????*
 20		4	medium	LE uint, row length (in bytes)
 24		12	medium	LE uint, row count := r (12 bytes?)
-36		4	medium	LE uint, partial column count
-40		4	medium	LE uint, partial column count
+36		4	medium	LE uint, partial column count := CC1
+40		4	medium	LE uint, partial column count := CC2
 44		8	low	*????????????*
 52		4	low	LE uint, page size?
 56		4	low	*????????????*
@@ -183,6 +183,7 @@ offset		length	conf.	description
 72		%H	low	filler
 ==============  ======  ======  ===============================================
 
+The partial column counts CC1 and CC2 always sum to CC (i.e., CC1+CC2=CC). Usually, CC1 is equal to CC, and CC2 is zero, but there are some exceptions. Their exact purpose is not clear.
 	
 Column Size Subheader 
 ---------------------
