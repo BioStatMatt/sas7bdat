@@ -201,7 +201,7 @@ offset		length	conf.	description
 Subheader Counts Subheader
 --------------------------
 
-This subheader contains information on the first and last appearances of at least 7 common subheader types.  It always has length 304.   Information related to this subheader was contributed by Clint Cummins.
+This subheader contains information on the first and last appearances of at least 7 common subheader types. It is always 304 bytes in length. Information related to this subheader was contributed by Clint Cummins.
 
 ==============  ======  ======  ===============================================
 offset		length	conf.	description
@@ -210,14 +210,14 @@ offset		length	conf.	description
 4		4	low	length or offset, usually >= 48d (30h)
 8		4	low	usually 4d (4 decimal,  04000000 hex)
 12		4	low	usually 7d
-76		8	low	usually zeroes
+76		8	low	usually zeros
 84		11*20	medium	11 `subheader count vectors`_, 20 bytes each
 ==============  ======  ======  ===============================================
 
 Subheader Count Vectors
 +++++++++++++++++++++++
 
-The subheader count vectors encode information of each of 7-11 common subheader types.
+The subheader count vectors encode information for each of 7 common subheader types, and potentially 11 total subheader types.
 
 ==============  ======  ======  ===============================================
 offset		length	conf.	description
@@ -229,7 +229,7 @@ offset		length	conf.	description
 16		4	medium	LE uint, location in subheader pointers where this subheader last appears := LOCL
 ==============  ======  ======  ===============================================
 
-The first 7 binary signatures in the Subheader Count Vector array are always:
+The first 7 binary signatures in the `Subheader Count Vectors`_ array are always:
 
 ========  =======  ====================
 hex       decimal   description
@@ -243,7 +243,7 @@ FAFFFFFF  -6       unknown signature #2
 F9FFFFFF  -7       unknown signature #3
 ========  =======  ====================
 
-The remaining 4/11 signatures are zeroes in the observed source files.
+The remaining 4 out of 11 signatures are zeros in the observed source files. Presumably, these are for subheaders not yet defined, or not present in the collection of test files.
 
 Notes:
 
