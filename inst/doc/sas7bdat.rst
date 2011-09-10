@@ -122,7 +122,7 @@ offset		length	conf.	description
 4		8	low	*????????????* (not critical)
 12		4	low	*????????????* row/col related (not critical)
 16		1       low     *????????????*
-17              1       low     LE uint, page type meta/data/mix/? (0/1/2/4)
+17              1       low     LE uint, page type meta/data/mix/meta_or_mix (0/1/2/4)
 18 (meta/mix)	2	low	*????????????*
 20 (meta/mix)	4	medium	LE uint, number of `subheader pointers`_ := L
 24 (meta/mix)	L*12	medium	L `subheader pointers`_, 24+L*12 := M
@@ -153,6 +153,8 @@ offset		length	conf.	description
 10		2	low	*????????????*
 ==============  ======  ======  ===============================================
 
+H is sometimes zero, which is an empty subheader.
+
 
 SAS7BDAT Subheaders
 ===================
@@ -171,8 +173,9 @@ offset		length	conf.	description
 4		16	low	*????????????*
 20		4	medium	LE uint, row length (in bytes)
 24		12	medium	LE uint, row count := r (12 bytes?)
-36		12	medium	LE uint, column count (12 bytes?)
-48		4	low	*????????????*
+36		4	medium	LE uint, partial column count
+40		4	medium	LE uint, partial column count
+44		8	low	*????????????*
 52		4	low	LE uint, page size?
 56		4	low	*????????????*
 60		4	medium	LE uint, max row count on "mix" page 
@@ -193,17 +196,64 @@ offset		length	conf.	description
 4		8	medium	LE uint, column count := CC 
 ==============  ======  ======  ===============================================
 
-Signature 00FCFFFF Subheader
-----------------------------
 
-The purpose of the subheader with signature 00FCFFFF is unknown. This subheader might contain pointers to column formatting information relative to the `column text subheader`_. 
+Subheader Counts Subheader
+--------------------------
+
+This subheader contains information on the first and last appearances of at least 7 common subheader types.  It always has length 304.   Information related to this subheader was contributed by Clint Cummins.
 
 ==============  ======  ======  ===============================================
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary, signature 00FCFFFF
-4		%H	low	*????????????*
+4		4	low	length or offset, usually >= 48d (30h)
+8		4	low	usually 4d (4 decimal,  04000000 hex)
+12		4	low	usually 7d
+76		8	low	usually zeroes
+84		11*20	medium	11 `subheader count vectors`_, 20 bytes each
 ==============  ======  ======  ===============================================
+
+Subheader Count Vectors
++++++++++++++++++++++++
+
+The subheader count vectors encode information of each of 7-11 common subheader types.
+
+==============  ======  ======  ===============================================
+offset		length	conf.	description
+==============  ======  ======  ===============================================
+0		4	medium	binary signature (see list below)
+4		4	medium	LE uint, page where this subheader first appears := PAGE1
+8		4	medium	LE uint, location in subheader pointers where this subheader first appears := LOC1
+12		4	medium	LE uint, page where this subheader last appears := PAGEL
+16		4	medium	LE uint, location in subheader pointers where this subheader last appears := LOCL
+==============  ======  ======  ===============================================
+
+The first 7 binary signatures in the Subheader Count Vector array are always:
+
+========  =======  ====================
+hex       decimal   description
+========  =======  ====================
+FCFFFFFF  -4       Column Attributes
+FDFFFFFF  -3       Column Text
+FFFFFFFF  -1       Column Names
+FEFFFFFF  -2       Column List
+FBFFFFFF  -5       unknown signature #1
+FAFFFFFF  -6       unknown signature #2
+F9FFFFFF  -7       unknown signature #3
+========  =======  ====================
+
+The remaining 4/11 signatures are zeroes in the observed source files.
+
+Notes:
+
+- If PAGE1=0, subheader does not appear in file.
+
+- If PAGE1=PAGEL and LOC1=LOCL, subheader appears exactly once.
+
+- If PAGE1!=PAGEL or LOC1!=LOCL, subheader appears 2 or more times.
+
+It appears that PAGE1 <= PAGEL, and these subheaders appear only once per page, so an upper bound on the count for each subheader in the file is probably  PAGEL-PAGE1+1  .
+Any of the subheaders identified in this table can appear more than once in the file, and if so, each is a separate array which provides information for a subset of the columns.
 
 
 Column Text Subheader
@@ -220,48 +270,50 @@ offset		length	conf.	description
 76		%H	high	ascii, combined column names, labels, formats
 ==============  ======  ======  ===============================================
 
+This subheader sometimes appears more than once; each is a separate array.
+If so, the "column name index" field in `column name pointers`_ selects a particular text array - 0 for the first array, 1 for the second, etc.
+Similarly, "column format index" and "column label index" fields also select a text array.
+
 Column Name Subheader
 ---------------------
 
 The column name subheader contains a sequence of `column name pointers`_ to the offset of each column name **relative to the `column text subheader`_**.
 
-==============  ======  ======  ===============================================
+==============  ======  ======  ====================================================
 offset		length	conf.	description
-==============  ======  ======  ===============================================
+==============  ======  ======  ====================================================
 0		4	medium	binary, signature FFFFFFFF
 4		8	medium	LE uint, length of remaining subheader
-12		8*CC	medium	`column name pointers`_ (see below)
-12+8*CC		8	medium	filler
-==============  ======  ======  ===============================================
+12		8*CMAX	medium	`column name pointers`_ (see below), CMAX=(H-12-8)/8
+12+8*CMAX		8	low	filler
+==============  ======  ======  ====================================================
 
 Column Name Pointers
 ++++++++++++++++++++
 
-==============  ======  ======  ===============================================
+==============  ======  ======  ======================================================
 offset		length	conf.	description
-==============  ======  ======  ===============================================
-0		1	low	LE uint, offset relative to page 04 subheader
-0		1	low	*?????????????*
+==============  ======  ======  ======================================================
+0		2	medium	LE uint, column name index to select `Column Text Subheader`_
 2		2	medium	LE uint, column name offset w.r.t. FDFFFFFF
 4		2	medium	LE uint, column name length
 6		2	low	binary, zeros
-==============  ======  ======  ===============================================
+==============  ======  ======  ======================================================
 
-If the first byte in the column name pointer is 01 (it is usually 00), this indicates that the column name offset is relative to an 'amendment subheader' (i.e. a subheader with the same signature, but found on an amendment page (page type 04).
 	
 Column Attributes Subheader
 ---------------------------
 
 The column attribute subheader holds information regarding the column offsets within a row, the column widths, and the column types (either numeric or character). The column attribute subheader sometimes occurs more than once (in test data). In these cases, column attributes are applied in the order they are parsed.
 
-==============  ======  ======  ===============================================
-offset		length	conf.	description
-==============  ======  ======  ===============================================
-0		4	medium	binary, signature FCFFFFFF
-4		8	medium	LE uint, length of remaining subheader
-12		12*CC	medium  `column attributes`_ (see below)
-12+12*CC	8	medium	filler
-==============  ======  ======  ===============================================
+==============  =======  ======  ===================================================
+offset          length   conf.   description
+==============  =======  ======  ===================================================
+0               4        medium  binary, signature FCFFFFFF
+4               8        medium  LE uint, length of remaining subheader
+12              12*CMAX  medium  `column attributes`_ (see below), CMAX=(H-12-8)/12
+12+12*CMAX      8        medium  filler
+==============  =======  ======  ===================================================
 
 Column Attributes 
 +++++++++++++++++
@@ -271,9 +323,21 @@ offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	LE uint, column offset in w.r.t. row
 4		4	medium	LE uint, column width
-8		2	low	*????????????*
+8		2	low	name length flag
 10		2	medium	LE uint, column type (01-num, 02-chr)
 ==============  ======  ======  ===============================================
+
+Observed values of name length flag in the source files:
+
+================  =================================================================
+name length flag		description
+================  =================================================================
+4			name length <= 8
+1024			usually means name length <= 8 , but sometimes the length is 9-12
+2048			name length > 8
+2560			name length > 8
+================  =================================================================
+
 
 Column Format and Label Subheader
 ---------------------------------
@@ -284,10 +348,11 @@ The column format and label subheader contains pointers to a column format and l
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary, signature FEFBFFFF
-4		32	low	*????????????*
+4		30	low	*????????????*
+34		2	medium	LE uint, column format index to select `Column Text Subheader`_
 36		2	medium	LE uint, column format offset wrt FDFFFFFF
-38		2	medium  LE uint, column format length
-40		2	low	*????????????*
+38		2	medium	LE uint, column format length
+40		2	medium	LE uint, column label index to select `Column Text Subheader`_
 42		2	medium	LE uint, column label offset wrt FDFFFFFF
 44		2	medium	LE uint, column label length
 46		6	low	*????????????*
@@ -317,7 +382,7 @@ offset		length	conf.	description
 
 Column List Values
 ++++++++++++++++++
-These values are 2 byte, little-endian signed integers. Each value is between -CC and CC. The significance of signedness and ordering is unknown. One theory is that these values indicate the sorting order of columns.
+These values are 2 byte, little-endian signed integers. Each value is between -CC and CC. The significance of signedness and ordering is unknown. The values do not correspond to a sorting order of columns.
 
 SAS7BDAT Packed Binary Data
 ===========================
@@ -391,8 +456,8 @@ ToDo
 - consider header bytes -by- SAS_host
 - check that only one page of type "mix" is observed. If so insert "In all test cases (``data/sources.csv``), there are exactly zero or one pages of type 'mix'." under the `Page Offset Table`_ header.  
 - identify all missing value representations: missing numeric values appear to be represented as '0000000000D1FFFF' (nan) for numeric 'double' quantities.
-- identify purpose of subheader 00FCFFFF
 - identify purpose of unknown header quantities
 - determine other bytes in subheader with signature FEFBFFFF
 - can SAS7BDAT files use non-ASCII encoding?
 - identify SAS7BDAT compression and encryption methods (this is not the same as 'cracking', or breaking encryption): data files may be compressed using the RLE (CHAR) and RDC (BINARY) algorithms.
+
