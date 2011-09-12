@@ -84,7 +84,7 @@ read_column_labels_formats <- function(col_labs, col_text) {
         len  <- read_int(col_labs[[i]]$raw, base + 4, 2)
         if(len > 0)
             labs[[i]]$format <- read_str(col_text[[txt+1]]$raw, off, len)
-        base <- 42
+        base <- 40
         txt  <- read_int(col_labs[[i]]$raw, base, 2)
         off  <- read_int(col_labs[[i]]$raw, base + 2, 2) + 4
         len  <- read_int(col_labs[[i]]$raw, base + 4, 2)
