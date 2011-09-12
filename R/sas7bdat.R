@@ -212,7 +212,7 @@ read.sas7bdat <- function(file) {
         pages[[page_num]]$page <- page_num
         pages[[page_num]]$data <- readBin(con, "raw", page_size, 1)
         pages[[page_num]]$type <- read_int(pages[[page_num]]$data, 17, 1)
-        if(pages[[page_num]]$type %in% c(1,2,4))
+        if(pages[[page_num]]$type %in% c(0,2,4))
             pages[[page_num]]$subh_count <- read_int(pages[[page_num]]$data, 20, 4)
     }
 
