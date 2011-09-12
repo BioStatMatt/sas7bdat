@@ -278,7 +278,7 @@ Similarly, "column format index" and "column label index" fields also select a t
 Column Name Subheader
 ---------------------
 
-The column name subheader contains a sequence of `column name pointers`_ to the offset of each column name **relative to the `column text subheader`_**.
+Column name subheaders contain a sequence of `column name pointers`_ to the offset of each column name **relative to a `column text subheader`_**.
 
 ==============  ======  ======  ====================================================
 offset		length	conf.	description
@@ -288,6 +288,7 @@ offset		length	conf.	description
 12		8*CMAX	medium	`column name pointers`_ (see below), CMAX=(H-12-8)/8
 12+8*CMAX		8	low	filler
 ==============  ======  ======  ====================================================
+
 
 Column Name Pointers
 ++++++++++++++++++++
