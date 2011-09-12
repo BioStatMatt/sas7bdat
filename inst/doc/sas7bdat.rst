@@ -201,7 +201,7 @@ offset		length	conf.	description
 Subheader Counts Subheader
 --------------------------
 
-This subheader contains information on the first and last appearances of at least 7 common subheader types. It is always 304 bytes in length. Information related to this subheader was contributed by Clint Cummins.
+This subheader contains information on the first and last appearances of at least 7 common subheader types. Any of these subheaders may appear once or more. Multiple instances of a subheader provide information for an exclusive subset of columns. The order in which data is read from multiple subheaders corresponds to the reading order (left to right) of columns. The subheader counts subheader is always 304 bytes in length. The structure of this subheader was deduced and reported by Clint Cummins.
 
 ==============  ======  ======  ===============================================
 offset		length	conf.	description
@@ -224,10 +224,12 @@ offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary signature (see list below)
 4		4	medium	LE uint, page where this subheader first appears := PAGE1
-8		4	medium	LE uint, location in subheader pointers where this subheader first appears := LOC1
+8		4	medium	LE uint, position of subheader pointer in PAGE1 := LOC1
 12		4	medium	LE uint, page where this subheader last appears := PAGEL
-16		4	medium	LE uint, location in subheader pointers where this subheader last appears := LOCL
+16		4	medium	LE uint, position of subheader pointer in PAGEL := LOCL
 ==============  ======  ======  ===============================================
+
+The LOC1 and LOCL give the positions of the corresponding subheader pointer in PAGE1 and PAGEL, respectively. That is, if there are L subheader pointers on page PAGE1, then the corresponding subheader pointer first occurs at the LOC1'th position in this array, enumerating from 1. If PAGE1=0, the subheader is not present. If PAGE1=PAGEL and LOC1=LOCL, the subheader appears exactly once. If PAGE1!=PAGEL or LOC1!=LOCL, the subheader appears 2 or more times. In all test files, PAGE1 <= PAGEL, and the corresponding subheaders appear only once per page. 
 
 The first 7 binary signatures in the `Subheader Count Vectors`_ array are always:
 
@@ -243,18 +245,8 @@ FAFFFFFF  -6       unknown signature #2
 F9FFFFFF  -7       unknown signature #3
 ========  =======  ====================
 
-The remaining 4 out of 11 signatures are zeros in the observed source files. Presumably, these are for subheaders not yet defined, or not present in the collection of test files.
+The remaining 4 out of 11 signatures are zeros in the observed source files. Presumably, these are for subheaders not yet defined, or not present in the collection of test files. 
 
-Notes:
-
-- If PAGE1=0, subheader does not appear in file.
-
-- If PAGE1=PAGEL and LOC1=LOCL, subheader appears exactly once.
-
-- If PAGE1!=PAGEL or LOC1!=LOCL, subheader appears 2 or more times.
-
-It appears that PAGE1 <= PAGEL, and these subheaders appear only once per page, so an upper bound on the count for each subheader in the file is probably  PAGEL-PAGE1+1  .
-Any of the subheaders identified in this table can appear more than once in the file, and if so, each is a separate array which provides information for a subset of the columns.
 
 
 Column Text Subheader

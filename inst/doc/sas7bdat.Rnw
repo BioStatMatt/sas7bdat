@@ -503,7 +503,7 @@ The \hyperref[page-offset-table]{page offset table} below describes each page ty
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.179\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.563\DUtablewidth}|}
+\begin{longtable}[c]{|p{0.171\DUtablewidth}|p{0.082\DUtablewidth}|p{0.082\DUtablewidth}|p{0.614\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -578,7 +578,7 @@ low
  & 
 low
  & 
-LE uint, page type meta/data/mix/? (0/1/2/4)
+LE uint, page type meta/data/mix/meta\_or\_mix (0/1/2/4)
  \\
 \hline
 
@@ -752,6 +752,8 @@ low
 \hline
 \end{longtable}
 
+H is sometimes zero, which is an empty subheader.
+
 
 %___________________________________________________________________________
 
@@ -847,17 +849,27 @@ LE uint, row count := r (12 bytes?)
 
 36
  & 
-12
+4
  & 
 medium
  & 
-LE uint, column count (12 bytes?)
+LE uint, partial column count := CC1
  \\
 \hline
 
-48
+40
  & 
 4
+ & 
+medium
+ & 
+LE uint, partial column count := CC2
+ \\
+\hline
+
+44
+ & 
+8
  & 
 low
  & 
@@ -915,6 +927,8 @@ filler
  \\
 \hline
 \end{longtable}
+
+The partial column counts CC1 and CC2 always sum to CC (i.e., CC1+CC2=CC). Usually, CC1 is equal to CC, and CC2 is zero, but there are some exceptions. Their exact purpose is not clear.
 
 
 %___________________________________________________________________________
@@ -982,13 +996,13 @@ LE uint, column count := CC
 
 %___________________________________________________________________________
 
-\subsection*{Signature 00FCFFFF Subheader%
+\subsection*{Subheader Counts Subheader%
   \phantomsection%
-  \addcontentsline{toc}{subsection}{Signature 00FCFFFF Subheader}%
-  \label{signature-00fcffff-subheader}%
+  \addcontentsline{toc}{subsection}{Subheader Counts Subheader}%
+  \label{subheader-counts-subheader}%
 }
 
-The purpose of the subheader with signature 00FCFFFF is unknown. This subheader might contain pointers to column formatting information relative to the \hyperref[column-text-subheader]{column text subheader}.
+This subheader contains information on the first and last appearances of at least 7 common subheader types. Any of these subheaders may appear once or more. Multiple instances of a subheader provide information for an exclusive subset of columns. The order in which data is read from multiple subheaders corresponds to the reading order (left to right) of columns. The subheader counts subheader is always 304 bytes in length. The structure of this subheader was deduced and reported by Clint Cummins.
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
@@ -1033,14 +1047,237 @@ binary, signature 00FCFFFF
 
 4
  & 
-\%H
+4
  & 
 low
  & 
-\emph{????????????}
+length or offset, usually >= 48d (30h)
+ \\
+\hline
+
+8
+ & 
+4
+ & 
+low
+ & 
+usually 4d (4 decimal,  04000000 hex)
+ \\
+\hline
+
+12
+ & 
+4
+ & 
+low
+ & 
+usually 7d
+ \\
+\hline
+
+76
+ & 
+8
+ & 
+low
+ & 
+usually zeros
+ \\
+\hline
+
+84
+ & 
+11*20
+ & 
+medium
+ & 
+11 \hyperref[subheader-count-vectors]{subheader count vectors}, 20 bytes each
  \\
 \hline
 \end{longtable}
+
+
+%___________________________________________________________________________
+
+\subsubsection*{Subheader Count Vectors%
+  \phantomsection%
+  \addcontentsline{toc}{subsubsection}{Subheader Count Vectors}%
+  \label{subheader-count-vectors}%
+}
+
+The subheader count vectors encode information for each of 7 common subheader types, and potentially 11 total subheader types.
+
+\leavevmode
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable}[c]{|p{0.165\DUtablewidth}|p{0.080\DUtablewidth}|p{0.080\DUtablewidth}|p{0.625\DUtablewidth}|}
+\hline
+\textbf{%
+offset
+} & \textbf{%
+length
+} & \textbf{%
+conf.
+} & \textbf{%
+description
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+offset
+} & \textbf{%
+length
+} & \textbf{%
+conf.
+} & \textbf{%
+description
+} \\
+\hline
+\endhead
+\multicolumn{4}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+0
+ & 
+4
+ & 
+medium
+ & 
+binary signature (see list below)
+ \\
+\hline
+
+4
+ & 
+4
+ & 
+medium
+ & 
+LE uint, page where this subheader first appears := PAGE1
+ \\
+\hline
+
+8
+ & 
+4
+ & 
+medium
+ & 
+LE uint, position of subheader pointer in PAGE1 := LOC1
+ \\
+\hline
+
+12
+ & 
+4
+ & 
+medium
+ & 
+LE uint, page where this subheader last appears := PAGEL
+ \\
+\hline
+
+16
+ & 
+4
+ & 
+medium
+ & 
+LE uint, position of subheader pointer in PAGEL := LOCL
+ \\
+\hline
+\end{longtable}
+
+The LOC1 and LOCL give the positions of the corresponding subheader pointer in PAGE1 and PAGEL, respectively. That is, if there are L subheader pointers on page PAGE1, then the corresponding subheader pointer first occurs at the LOC1'th position in this array, enumerating from 1. If PAGE1=0, the subheader is not present. If PAGE1=PAGEL and LOC1=LOCL, the subheader appears exactly once. If PAGE1!=PAGEL or LOC1!=LOCL, the subheader appears 2 or more times. In all test files, PAGE1 <= PAGEL, and the corresponding subheaders appear only once per page.
+
+The first 7 binary signatures in the \hyperref[subheader-count-vectors]{Subheader Count Vectors} array are always:
+
+\leavevmode
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable}[c]{|p{0.110\DUtablewidth}|p{0.098\DUtablewidth}|p{0.249\DUtablewidth}|}
+\hline
+\textbf{%
+hex
+} & \textbf{%
+decimal
+} & \textbf{%
+description
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+hex
+} & \textbf{%
+decimal
+} & \textbf{%
+description
+} \\
+\hline
+\endhead
+\multicolumn{3}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+FCFFFFFF
+ & 
+-4
+ & 
+Column Attributes
+ \\
+\hline
+
+FDFFFFFF
+ & 
+-3
+ & 
+Column Text
+ \\
+\hline
+
+FFFFFFFF
+ & 
+-1
+ & 
+Column Names
+ \\
+\hline
+
+FEFFFFFF
+ & 
+-2
+ & 
+Column List
+ \\
+\hline
+
+FBFFFFFF
+ & 
+-5
+ & 
+unknown signature \#1
+ \\
+\hline
+
+FAFFFFFF
+ & 
+-6
+ & 
+unknown signature \#2
+ \\
+\hline
+
+F9FFFFFF
+ & 
+-7
+ & 
+unknown signature \#3
+ \\
+\hline
+\end{longtable}
+
+The remaining 4 out of 11 signatures are zeros in the observed source files. Presumably, these are for subheaders not yet defined, or not present in the collection of test files.
 
 
 %___________________________________________________________________________
@@ -1125,6 +1362,10 @@ ascii, combined column names, labels, formats
 \hline
 \end{longtable}
 
+This subheader sometimes appears more than once; each is a separate array.
+If so, the ``column name index'' field in \hyperref[column-name-pointers]{column name pointers} selects a particular text array - 0 for the first array, 1 for the second, etc.
+Similarly, ``column format index'' and ``column label index'' fields also select a text array.
+
 
 %___________________________________________________________________________
 
@@ -1134,11 +1375,11 @@ ascii, combined column names, labels, formats
   \label{column-name-subheader}%
 }
 
-The column name subheader contains a sequence of \hyperref[column-name-pointers]{column name pointers} to the offset of each column name \textbf{relative to the `column text subheader`\_}.
+Column name subheaders contain a sequence of \hyperref[column-name-pointers]{column name pointers} to the offset of each column name \textbf{relative to a `column text subheader`\_}. There may be multiple column name subheaders, indexing into multiple column text subheaders.
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.179\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.563\DUtablewidth}|}
+\begin{longtable}[c]{|p{0.175\DUtablewidth}|p{0.084\DUtablewidth}|p{0.084\DUtablewidth}|p{0.606\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1189,24 +1430,24 @@ LE uint, length of remaining subheader
 
 12
  & 
-8*CC
+8*CMAX
  & 
 medium
  & 
-\hyperref[column-name-pointers]{column name pointers} (see below)
+\hyperref[column-name-pointers]{column name pointers} (see below), CMAX=(H-12-8)/8
  \\
 \hline
 
-12+8*CC
- & 
+12+8*CMAX
+ &  & 
 8
  & 
-medium
- & 
-filler
+low     filler
  \\
 \hline
 \end{longtable}
+
+Each column name subheader hold CMAX column name pointers. When there are multiple column name subheaders, CMAX will be less than CC.
 
 
 %___________________________________________________________________________
@@ -1219,7 +1460,7 @@ filler
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.179\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.563\DUtablewidth}|}
+\begin{longtable}[c]{|p{0.158\DUtablewidth}|p{0.077\DUtablewidth}|p{0.077\DUtablewidth}|p{0.639\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1250,21 +1491,11 @@ description
 
 0
  & 
-1
+2
  & 
-low
+medium
  & 
-LE uint, offset relative to page 04 subheader
- \\
-\hline
-
-0
- & 
-1
- & 
-low
- & 
-\emph{?????????????}
+LE uint, column name index to select \hyperref[column-text-subheader]{Column Text Subheader}
  \\
 \hline
 
@@ -1299,8 +1530,6 @@ binary, zeros
 \hline
 \end{longtable}
 
-If the first byte in the column name pointer is 01 (it is usually 00), this indicates that the column name offset is relative to an 'amendment subheader' (i.e. a subheader with the same signature, but found on an amendment page (page type 04).
-
 
 %___________________________________________________________________________
 
@@ -1314,7 +1543,7 @@ The column attribute subheader holds information regarding the column offsets wi
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.179\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.563\DUtablewidth}|}
+\begin{longtable}[c]{|p{0.175\DUtablewidth}|p{0.096\DUtablewidth}|p{0.084\DUtablewidth}|p{0.595\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1365,15 +1594,15 @@ LE uint, length of remaining subheader
 
 12
  & 
-12*CC
+12*CMAX
  & 
 medium
  & 
-\hyperref[column-attributes]{column attributes} (see below)
+\hyperref[column-attributes]{column attributes} (see below), CMAX=(H-12-8)/12
  \\
 \hline
 
-12+12*CC
+12+12*CMAX
  & 
 8
  & 
@@ -1450,7 +1679,7 @@ LE uint, column width
  & 
 low
  & 
-\emph{????????????}
+name length flag
  \\
 \hline
 
@@ -1461,6 +1690,56 @@ low
 medium
  & 
 LE uint, column type (01-num, 02-chr)
+ \\
+\hline
+\end{longtable}
+
+Observed values of name length flag in the source files:
+
+\leavevmode
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable}[c]{|p{0.183\DUtablewidth}|p{0.757\DUtablewidth}|}
+\hline
+\textbf{%
+name length flag
+} & \textbf{%
+description
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+name length flag
+} & \textbf{%
+description
+} \\
+\hline
+\endhead
+\multicolumn{2}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+4
+ & 
+name length <= 8
+ \\
+\hline
+
+1024
+ & 
+usually means name length <= 8 , but sometimes the length is 9-12
+ \\
+\hline
+
+2048
+ & 
+name length > 8
+ \\
+\hline
+
+2560
+ & 
+name length > 8
  \\
 \hline
 \end{longtable}
@@ -1478,7 +1757,7 @@ The column format and label subheader contains pointers to a column format and l
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.179\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.563\DUtablewidth}|}
+\begin{longtable}[c]{|p{0.155\DUtablewidth}|p{0.075\DUtablewidth}|p{0.075\DUtablewidth}|p{0.645\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1519,11 +1798,21 @@ binary, signature FEFBFFFF
 
 4
  & 
-32
+30
  & 
 low
  & 
 \emph{????????????}
+ \\
+\hline
+
+34
+ & 
+2
+ & 
+medium
+ & 
+LE uint, column format index to select \hyperref[column-text-subheader]{Column Text Subheader}
  \\
 \hline
 
@@ -1551,9 +1840,9 @@ LE uint, column format length
  & 
 2
  & 
-low
+medium
  & 
-\emph{????????????}
+LE uint, column label index to select \hyperref[column-text-subheader]{Column Text Subheader}
  \\
 \hline
 
@@ -1760,7 +2049,7 @@ usually zeros
   \label{column-list-values}%
 }
 
-These values are 2 byte, little-endian signed integers. Each value is between -CC and CC. The significance of signedness and ordering is unknown. One theory is that these values indicate the sorting order of columns.
+These values are 2 byte, little-endian signed integers. Each value is between -CC and CC. The significance of signedness and ordering is unknown. The values do not correspond to a sorting order of columns.
 
 
 %___________________________________________________________________________
@@ -2057,8 +2346,6 @@ Disadvantages:
 \item check that only one page of type ``mix'' is observed. If so insert ``In all test cases (\texttt{data/sources.csv}), there are exactly zero or one pages of type 'mix'.'' under the \hyperref[page-offset-table]{Page Offset Table} header.
 
 \item identify all missing value representations: missing numeric values appear to be represented as '0000000000D1FFFF' (nan) for numeric 'double' quantities.
-
-\item identify purpose of subheader 00FCFFFF
 
 \item identify purpose of unknown header quantities
 
