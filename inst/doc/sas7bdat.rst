@@ -183,7 +183,7 @@ offset		length	conf.	description
 72		%H	low	filler
 ==============  ======  ======  ===============================================
 
-The partial column counts CC1 and CC2 always sum to CC (i.e., CC1+CC2=CC). Usually, CC1 is equal to CC, and CC2 is zero, but there are some exceptions. Their exact purpose is not clear.
+The partial column counts CC1 and CC2 usually sum to CC (i.e., CC1+CC2=CC). Usually, CC1 is equal to CC, and CC2 is zero, but there are some exceptions. Their exact purpose is not clear.
 	
 Column Size Subheader 
 ---------------------
@@ -278,7 +278,7 @@ offset		length	conf.	description
 0		4	medium	binary, signature FFFFFFFF
 4		8	medium	LE uint, length of remaining subheader
 12		8*CMAX	medium	`column name pointers`_ (see below), CMAX=(H-12-8)/8
-12+8*CMAX		8	low	filler
+12+8*CMAX	8	low	filler
 ==============  ======  ======  ====================================================
 
 Each column name subheader hold CMAX column name pointers. When there are multiple column name subheaders, CMAX will be less than CC.

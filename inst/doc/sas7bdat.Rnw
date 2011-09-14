@@ -928,7 +928,7 @@ filler
 \hline
 \end{longtable}
 
-The partial column counts CC1 and CC2 always sum to CC (i.e., CC1+CC2=CC). Usually, CC1 is equal to CC, and CC2 is zero, but there are some exceptions. Their exact purpose is not clear.
+The partial column counts CC1 and CC2 usually sum to CC (i.e., CC1+CC2=CC). Usually, CC1 is equal to CC, and CC2 is zero, but there are some exceptions. Their exact purpose is not clear.
 
 
 %___________________________________________________________________________
@@ -1439,10 +1439,12 @@ medium
 \hline
 
 12+8*CMAX
- &  & 
+ & 
 8
  & 
-low     filler
+low
+ & 
+filler
  \\
 \hline
 \end{longtable}

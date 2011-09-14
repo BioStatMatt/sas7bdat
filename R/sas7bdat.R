@@ -19,10 +19,9 @@ CAUTION   <- "please verify data correctness"
 
 # Host systems known to work
 KNOWNHOST <- c("WIN_PRO", "WIN_NT", "WIN_NTSV", "WIN_SRV",
-               "WIN_ASRV", "XP_PRO", "XP_HOME", "W32_VSPRO",
-               "NET_ASRV", "NET_DSRV", "NET_SRV", "WIN_98",
-               "W32_VSPR", "WIN", "WIN_95", "X64_VSPR",
-               "X64_ESRV")
+               "WIN_ASRV", "XP_PRO", "XP_HOME", "NET_ASRV",
+               "NET_DSRV", "NET_SRV", "WIN_98", "W32_VSPR",
+               "WIN", "WIN_95", "X64_VSPR", "X64_ESRV")
 
 # Subheader 'signatures'
 SUBH_ROWSIZE <- as.raw(c(0xF7,0xF7,0xF7,0xF7))
@@ -270,8 +269,8 @@ read.sas7bdat <- function(file) {
     col_count_6  <- read_int(col_size$raw, 4, 4)
     col_count    <- col_count_6
 
-    if((col_count_p1 + col_count_p2) != col_count_6)
-        warning(paste("column count mismatch" , CAUTION))
+    #if((col_count_p1 + col_count_p2) != col_count_6)
+    #    warning(paste("column count mismatch" , CAUTION))
 
     # Read column information
     col_text <- get_subhs(subhs, SUBH_COLTEXT)
@@ -280,7 +279,7 @@ read.sas7bdat <- function(file) {
 
     col_attr <- get_subhs(subhs, SUBH_COLATTR)            
     if(length(col_attr) < 1)
-        stop(paste("no colun attribute subheaders found", BUGREPORT))
+        stop(paste("no column attribute subheaders found", BUGREPORT))
     col_attr <- read_column_attributes(col_attr)
     if(length(col_attr) != col_count)
         stop(paste("found", length(col_attr), 
