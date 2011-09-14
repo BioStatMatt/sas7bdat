@@ -118,9 +118,9 @@ The figure below illustrates the overall structure of the SAS7BDAT database. Eac
   \label{sas7bdat-header}%
 }
 
-The SAS7BDAT file header contains a binary file identifier (\emph{i.e.}, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. All files encountered encode multi-byte values little-endian (least significant byte first). However, it is typical to specify endianness of multi-byte values in a file header.
+The SAS7BDAT file header contains a binary file identifier (\emph{i.e.}, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. Most files encountered encode multi-byte values little-endian (least significant byte first). However, at least one file (written 3/12/1986) uses big-endian. Hence, it appears that multi-byte values are encoded using endianness of the platform where the file was written. It's not certain how the endianness is specified in the file header.
 
-The \emph{offset table} below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. Byte lengths having the form '\%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'LE uint, page size := PS' indicates that the data stored at the corresponding location is a little-endian unsigned integer representing the page size, which we denote PS. The description \emph{????????????} indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
+The \emph{offset table} below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. Byte lengths having the form '\%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'uint, page size := PS' indicates that the data stored at the corresponding location is a little-endian unsigned integer representing the page size, which we denote PS. The description \emph{????????????} indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
 
 
 %___________________________________________________________________________
@@ -288,7 +288,7 @@ ascii, file type
  & 
 high
  & 
-2x LE double, timestamp, secs since 1/1/60
+2x double, timestamp, secs since 1/1/60
  \\
 \hline
 
@@ -318,7 +318,7 @@ low
  & 
 high
  & 
-LE uint, page size := PS
+int, page size := PS
  \\
 \hline
 
@@ -328,7 +328,7 @@ LE uint, page size := PS
  & 
 high
  & 
-LE uint, page count := PC
+int, page count := PC
  \\
 \hline
 
@@ -393,7 +393,123 @@ filler/zeros
 \hline
 \end{longtable}
 
-The bitmasks at offsets 35, 36, and 37 appear to hold information regarding the offset of the 'release' and 'host' information. The following table describes the possible polymorphisms, where the first column contains the hex values for bytes 35-37, the second column shows bytes 216-239 ('.' represents a non-ASCII character or '0', 'a' represents an ASCII character), and the third column gives the type of platform data observed there ('WIN\_*' represents various Microsoft Windows types, such as 'WIN\_NT' and 'WIN\_PRO'). Additional data files are needed to investigate this aspect further.
+The 8 bytes beginning at offset 32 appear to hold information regarding the offset of the 'release' and 'host' information. The following table describes some of the possible polymorphisms, where the first column contains the hex values for bytes 32-39, the second column shows bytes 216-239 ('.' represents a non-ASCII character or '0'). The byte at offset 39 appears to distinguish the file format type, where '1' indicates that the file was generated on a UNIX-like system, such as Linux or SunOS, and '2' indicates the file was generated on a Microsoft Windows platform. Additional data files are needed to investigate these aspects further.
+
+\leavevmode
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable}[c]{|p{0.311\DUtablewidth}|p{0.311\DUtablewidth}|p{0.322\DUtablewidth}|}
+\hline
+\textbf{%
+filename
+} & \textbf{%
+bytes 32-39
+} & \textbf{%
+bytes 216-239
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+filename
+} & \textbf{%
+bytes 32-39
+} & \textbf{%
+bytes 216-239
+} \\
+\hline
+\endhead
+\multicolumn{3}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+\texttt{compress\_no.sas7bdat}
+ & 
+\texttt{22 22 00 32 22 01 02 32}
+ & 
+\texttt{9.0101M3NET\_ASRV........}
+ \\
+\hline
+
+\texttt{compress\_yes.sas7bdat}
+ & 
+\texttt{22 22 00 32 22 01 02 32}
+ & 
+\texttt{9.0101M3NET\_ASRV........}
+ \\
+\hline
+
+\texttt{lowbwt\_i386.sas7bdat}
+ & 
+\texttt{22 22 00 32 22 01 02 32}
+ & 
+\texttt{9.0202M0W32\_VSPRO.......}
+ \\
+\hline
+
+\texttt{missing\_values.sas7bdat}
+ & 
+\texttt{22 22 00 32 22 01 02 32}
+ & 
+\texttt{9.0202M0W32\_VSPRO.......}
+ \\
+\hline
+
+\texttt{obs\_all\_perf\_1.sas7bdat}
+ & 
+\texttt{22 22 00 32 22 01 02 32}
+ & 
+\texttt{9.0101M3XP\_PRO..........}
+ \\
+\hline
+
+\texttt{adsl.sas7bdat}
+ & 
+\texttt{22 22 00 33 33 01 02 32}
+ & 
+\texttt{....9.0202M3X64\_ESRV....}
+ \\
+\hline
+
+\texttt{eyecarex.sas7bdat}
+ & 
+\texttt{22 22 00 33 22 00 02 31}
+ & 
+\texttt{....9.0000M0WIN.........}
+ \\
+\hline
+
+\texttt{lowbwt\_x64.sas7bdat}
+ & 
+\texttt{22 22 00 33 33 01 02 32}
+ & 
+\texttt{....9.0202M2X64\_VSPRO...}
+ \\
+\hline
+
+\texttt{natlterr1994.sas7bdat}
+ & 
+\texttt{33 22 00 33 33 00 02 31}
+ & 
+\texttt{........9.0101M3SunOS...}
+ \\
+\hline
+
+\texttt{natlterr2006.sas7bdat}
+ & 
+\texttt{33 22 00 33 33 00 02 31}
+ & 
+\texttt{........9.0101M3SunOS...}
+ \\
+\hline
+
+\texttt{txzips.sas7bdat}
+ & 
+\texttt{33 22 00 33 33 01 02 31}
+ & 
+\texttt{........9.0201M0Linux...}
+ \\
+\hline
+\end{longtable}
 
 
 %___________________________________________________________________________
@@ -405,60 +521,6 @@ The bitmasks at offsets 35, 36, and 37 appear to hold information regarding the 
 }
 
 In files generated by 64 bit builds of SAS, 'Align' means that the offset of this data field should be advanced so that the offset is a factor of 8 bytes. For files generated by 32 bit builds of SAS, the alignment is 4 bytes. Because \hyperref[sas7bdat-packed-binary-data]{SAS7BDAT Packed Binary Data} potentially consist of doubles, it seems that all data rows are 64 bit aligned, regardless of whether the file was written with a 32 bit or 64 bit build of SAS. Alignment of data structures according to the platform word length (4 bytes for 32 bit, and 8 bytes for 64 bit architectures) facilitates efficient operations on data stored in memory. It also suggests that parts of SAS7BDAT data file format are platform dependent. One theory is that the SAS implementation utilizes a common C or C++ structure or class to reference data stored in memory. When compiled, these structures are aligned according to the word length of the target platform. Of course, when SAS was originally written, platform differences may not have been forseeable. Hence, these inconsistencies may not have been intentional.
-
-\leavevmode
-\setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.145\DUtablewidth}|p{0.296\DUtablewidth}|p{0.191\DUtablewidth}|}
-\hline
-\textbf{%
-bytes 35-37
-} & \textbf{%
-host + release data
-} & \textbf{%
-platform
-} \\
-\hline
-\endfirsthead
-\hline
-\textbf{%
-bytes 35-37
-} & \textbf{%
-host + release data
-} & \textbf{%
-platform
-} \\
-\hline
-\endhead
-\multicolumn{3}{c}{\hfill ... continued on next page} \\
-\endfoot
-\endlastfoot
-
-32 22 01
- & 
-aaaaaaaaaaaaaaaa........
- & 
-WIN\_* and Linux
- \\
-\hline
-
-33 22 00
- & 
-....aaaaaaaaaaaa........
- & 
-WIN
- \\
-\hline
-
-33 33 00
- & 
-........aaaaaaaaaaaaaaaa
- & 
-SunOS
- \\
-\hline
-\end{longtable}
-
-The byte at offset 39 appears to distinguish the file format type, where '1' indicates that the file was generated on a UNIX-like system, such as Linux or SunOS, and '2' indicates the file was generated on a Microsoft Windows platform.
 
 
 %___________________________________________________________________________
@@ -503,7 +565,7 @@ The \hyperref[page-offset-table]{page offset table} below describes each page ty
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.179\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.563\DUtablewidth}|}
+\begin{longtable}[c]{|p{0.179\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.586\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -564,21 +626,11 @@ low
 
 16
  & 
-1
- & 
-low
- & 
-\emph{????????????}
- \\
-\hline
-
-17
- & 
-1
+2
  & 
 medium
  & 
-LE uint, page type meta/data/mix/amd (0/1/2/4)
+int, page type meta/data/mix/amd (0/256/512/1024)
  \\
 \hline
 
@@ -594,11 +646,21 @@ low
 
 20 (meta/mix)
  & 
-4
+2
  & 
 medium
  & 
-LE uint, number of \hyperref[subheader-pointers]{subheader pointers} := L
+int, number of \hyperref[subheader-pointers]{subheader pointers} := L
+ \\
+\hline
+
+22 (meta/mix)
+ & 
+2
+ & 
+low
+ & 
+\emph{????????????}
  \\
 \hline
 
@@ -638,7 +700,7 @@ medium
  & 
 medium
  & 
-LE uint, page row count
+int, page row count
  \\
 \hline
 
@@ -707,7 +769,7 @@ description
  & 
 high
  & 
-LE uint, offset from page start to subheader
+int, offset from page start to subheader
  \\
 \hline
 
@@ -717,7 +779,7 @@ LE uint, offset from page start to subheader
  & 
 high
  & 
-LE uint, length of subheader := H
+int, length of subheader := H
  \\
 \hline
 
@@ -727,7 +789,7 @@ LE uint, length of subheader := H
  & 
 low
  & 
-LE uint, optional (0/1)?
+int, optional (0/1)?
  \\
 \hline
 
@@ -737,7 +799,7 @@ LE uint, optional (0/1)?
  & 
 low
  & 
-LE uint, continue next page (0/1)?
+int, continue next page (0/1)?
  \\
 \hline
 
@@ -833,7 +895,7 @@ low
  & 
 medium
  & 
-LE uint, row length (in bytes)
+int, row length (in bytes)
  \\
 \hline
 
@@ -843,7 +905,7 @@ LE uint, row length (in bytes)
  & 
 medium
  & 
-LE uint, row count := r (12 bytes?)
+int, row count := r (12 bytes?)
  \\
 \hline
 
@@ -853,7 +915,7 @@ LE uint, row count := r (12 bytes?)
  & 
 medium
  & 
-LE uint, partial column count := CC1
+int, partial column count := CC1
  \\
 \hline
 
@@ -863,7 +925,7 @@ LE uint, partial column count := CC1
  & 
 medium
  & 
-LE uint, partial column count := CC2
+int, partial column count := CC2
  \\
 \hline
 
@@ -883,7 +945,7 @@ low
  & 
 low
  & 
-LE uint, page size?
+int, page size?
  \\
 \hline
 
@@ -903,7 +965,7 @@ low
  & 
 medium
  & 
-LE uint, max row count on ``mix'' page
+int, max row count on ``mix'' page
  \\
 \hline
 
@@ -988,7 +1050,7 @@ binary, signature F6F6F6F6
  & 
 medium
  & 
-LE uint, column count := CC
+int, column count := CC
  \\
 \hline
 \end{longtable}
@@ -1109,7 +1171,7 @@ The subheader count vectors encode information for each of 7 common subheader ty
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.165\DUtablewidth}|p{0.080\DUtablewidth}|p{0.080\DUtablewidth}|p{0.625\DUtablewidth}|}
+\begin{longtable}[c]{|p{0.173\DUtablewidth}|p{0.083\DUtablewidth}|p{0.083\DUtablewidth}|p{0.610\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1154,17 +1216,27 @@ binary signature (see list below)
  & 
 medium
  & 
-LE uint, page where this subheader first appears := PAGE1
+int, page where this subheader first appears := PAGE1
  \\
 \hline
 
 8
  & 
-4
+2
  & 
 medium
  & 
-LE uint, position of subheader pointer in PAGE1 := LOC1
+int, position of subheader pointer in PAGE1 := LOC1
+ \\
+\hline
+
+10
+ & 
+2
+ & 
+low
+ & 
+\emph{????????????}
  \\
 \hline
 
@@ -1174,17 +1246,27 @@ LE uint, position of subheader pointer in PAGE1 := LOC1
  & 
 medium
  & 
-LE uint, page where this subheader last appears := PAGEL
+int, page where this subheader last appears := PAGEL
  \\
 \hline
 
 16
  & 
-4
+2
  & 
 medium
  & 
-LE uint, position of subheader pointer in PAGEL := LOCL
+int, position of subheader pointer in PAGEL := LOCL
+ \\
+\hline
+
+18
+ & 
+2
+ & 
+low
+ & 
+\emph{????????????}
  \\
 \hline
 \end{longtable}
@@ -1337,7 +1419,7 @@ binary, signature FDFFFFFF
  & 
 medium
  & 
-LE uint, length of remaining subheader
+int, length of remaining subheader
  \\
 \hline
 
@@ -1424,7 +1506,7 @@ binary, signature FFFFFFFF
  & 
 medium
  & 
-LE uint, length of remaining subheader
+int, length of remaining subheader
  \\
 \hline
 
@@ -1462,7 +1544,7 @@ Each column name subheader hold CMAX column name pointers. When there are multip
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.158\DUtablewidth}|p{0.077\DUtablewidth}|p{0.077\DUtablewidth}|p{0.639\DUtablewidth}|}
+\begin{longtable}[c]{|p{0.165\DUtablewidth}|p{0.080\DUtablewidth}|p{0.080\DUtablewidth}|p{0.625\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1497,7 +1579,7 @@ description
  & 
 medium
  & 
-LE uint, column name index to select \hyperref[column-text-subheader]{Column Text Subheader}
+int, column name index to select \hyperref[column-text-subheader]{Column Text Subheader}
  \\
 \hline
 
@@ -1507,7 +1589,7 @@ LE uint, column name index to select \hyperref[column-text-subheader]{Column Tex
  & 
 medium
  & 
-LE uint, column name offset w.r.t. FDFFFFFF
+int, column name offset w.r.t. FDFFFFFF
  \\
 \hline
 
@@ -1517,7 +1599,7 @@ LE uint, column name offset w.r.t. FDFFFFFF
  & 
 medium
  & 
-LE uint, column name length
+int, column name length
  \\
 \hline
 
@@ -1590,7 +1672,7 @@ binary, signature FCFFFFFF
  & 
 medium
  & 
-LE uint, length of remaining subheader
+int, length of remaining subheader
  \\
 \hline
 
@@ -1661,7 +1743,7 @@ description
  & 
 medium
  & 
-LE uint, column offset in w.r.t. row
+int, column offset in w.r.t. row
  \\
 \hline
 
@@ -1671,7 +1753,7 @@ LE uint, column offset in w.r.t. row
  & 
 medium
  & 
-LE uint, column width
+int, column width
  \\
 \hline
 
@@ -1687,11 +1769,21 @@ name length flag
 
 10
  & 
-2
+1
  & 
 medium
  & 
-LE uint, column type (01-num, 02-chr)
+int, column type (01-num, 02-chr)
+ \\
+\hline
+
+11
+ & 
+1
+ & 
+low
+ & 
+\emph{????????????}
  \\
 \hline
 \end{longtable}
@@ -1759,7 +1851,7 @@ The column format and label subheader contains pointers to a column format and l
 
 \leavevmode
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable}[c]{|p{0.155\DUtablewidth}|p{0.075\DUtablewidth}|p{0.075\DUtablewidth}|p{0.645\DUtablewidth}|}
+\begin{longtable}[c]{|p{0.162\DUtablewidth}|p{0.078\DUtablewidth}|p{0.078\DUtablewidth}|p{0.632\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1814,7 +1906,7 @@ low
  & 
 medium
  & 
-LE uint, column format index to select \hyperref[column-text-subheader]{Column Text Subheader}
+int, column format index to select \hyperref[column-text-subheader]{Column Text Subheader}
  \\
 \hline
 
@@ -1824,7 +1916,7 @@ LE uint, column format index to select \hyperref[column-text-subheader]{Column T
  & 
 medium
  & 
-LE uint, column format offset wrt FDFFFFFF
+int, column format offset wrt FDFFFFFF
  \\
 \hline
 
@@ -1834,7 +1926,7 @@ LE uint, column format offset wrt FDFFFFFF
  & 
 medium
  & 
-LE uint, column format length
+int, column format length
  \\
 \hline
 
@@ -1844,7 +1936,7 @@ LE uint, column format length
  & 
 medium
  & 
-LE uint, column label index to select \hyperref[column-text-subheader]{Column Text Subheader}
+int, column label index to select \hyperref[column-text-subheader]{Column Text Subheader}
  \\
 \hline
 
@@ -1854,7 +1946,7 @@ LE uint, column label index to select \hyperref[column-text-subheader]{Column Te
  & 
 medium
  & 
-LE uint, column label offset wrt FDFFFFFF
+int, column label offset wrt FDFFFFFF
  \\
 \hline
 
@@ -1864,7 +1956,7 @@ LE uint, column label offset wrt FDFFFFFF
  & 
 medium
  & 
-LE uint, column label length
+int, column label length
  \\
 \hline
 
@@ -1937,7 +2029,7 @@ binary, signature FEFFFFFF
  & 
 medium
  & 
-LE uint, length of remaining subheader
+int, length of remaining subheader
  \\
 \hline
 
@@ -1957,7 +2049,7 @@ low
  & 
 medium
  & 
-LE uint, length of remaining subheader
+int, length of remaining subheader
  \\
 \hline
 
@@ -1977,7 +2069,7 @@ low
  & 
 low
  & 
-LE uint, usually equals CC
+int, usually equals CC
  \\
 \hline
 
@@ -1987,7 +2079,7 @@ LE uint, usually equals CC
  & 
 medium
  & 
-LE uint, length of column list := CL
+int, length of column list := CL
  \\
 \hline
 
@@ -1997,7 +2089,7 @@ LE uint, length of column list := CL
  & 
 low
  & 
-LE uint, usually 1
+int, usually 1
  \\
 \hline
 
@@ -2007,7 +2099,7 @@ LE uint, usually 1
  & 
 low
  & 
-LE uint, usually equals CC
+int, usually equals CC
  \\
 \hline
 
@@ -2341,6 +2433,8 @@ Disadvantages:
 %
 \begin{itemize}
 
+\item what are CC1 and CC2 for?
+
 \item experiment further with 'amendment page' concept
 
 \item consider header bytes -by- SAS\_host
@@ -2356,6 +2450,8 @@ Disadvantages:
 \item identify how non-ASCII encoding is specified
 
 \item identify SAS7BDAT compression and encryption methods (this is not the same as 'cracking', or breaking encryption): data files may be compressed using the RLE (CHAR) and RDC (BINARY) algorithms.
+
+\item implement options to read just header (and subheader) information without data, and an option to read just some data fields, and not all fields.
 
 \end{itemize}
 

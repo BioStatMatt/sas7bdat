@@ -33,10 +33,19 @@ SUBH_COLLABS <- as.raw(c(0xFE,0xFB,0xFF,0xFF))
 SUBH_COLLIST <- as.raw(c(0xFE,0xFF,0xFF,0xFF))
 SUBH_SUBHCNT <- as.raw(c(0x00,0xFC,0xFF,0xFF))
 
+# Page types
+PAGE_META <- 0
+PAGE_DATA <- 256
+PAGE_MIX  <- 512
+PAGE_AMD  <- 1024
+PAGE_MIX_DATA <- c(PAGE_MIX, PAGE_DATA)
+PAGE_META_MIX_AMD <- c(PAGE_META, PAGE_MIX, PAGE_AMD)
+PAGE_ANY  <- c(PAGE_META_MIX_AMD, PAGE_DATA)
+
 read_subheaders <- function(page) {
     subhs <- list()
     subh_total <- 0
-    if(!(page$type %in% c(0,2,4)))
+    if(!(page$type %in% PAGE_META_MIX_AMD))
         return(subhs)
     for(i in 1:page$subh_count) {
         subh_total <- subh_total + 1
@@ -111,9 +120,10 @@ read_column_attributes <- function(col_attr) {
     return(info)
 }
 
-#Alignment
+# Alignment
 ALIGN_64     <- as.raw(c(0x33,0x33))
 ALIGN_32     <- as.raw(c(0x32,0x22))
+
 
 # Magic number
 MAGIC     <- as.raw(c(0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
@@ -210,12 +220,12 @@ read.sas7bdat <- function(file) {
         pages[[page_num]] <- list()
         pages[[page_num]]$page <- page_num
         pages[[page_num]]$data <- readBin(con, "raw", page_size, 1)
-        pages[[page_num]]$type <- read_int(pages[[page_num]]$data, 17, 1)
-        if(pages[[page_num]]$type %in% c(0,2,4))
-            pages[[page_num]]$subh_count <- read_int(pages[[page_num]]$data, 20, 4)
+        pages[[page_num]]$type <- read_int(pages[[page_num]]$data, 16, 2)
+        if(pages[[page_num]]$type %in%  PAGE_META_MIX_AMD)
+            pages[[page_num]]$subh_count <- read_int(pages[[page_num]]$data, 20, 2)
     }
 
-    if(any(sapply(pages, function(page) !(page$type %in% c(0,1,2,4)))))
+    if(any(sapply(pages, function(page) !(page$type %in% PAGE_ANY))))
         stop(paste("page", page_num, "has unknown type:",
             pages[[page_num]]$type, BUGREPORT))
 
@@ -316,9 +326,9 @@ read.sas7bdat <- function(file) {
     row   <- 0
     for(page in pages) {
         #FIXME are there data on pages of type 4?
-        if(!(page$type %in% c(1,2)))
+        if(!(page$type %in% PAGE_MIX_DATA))
             next 
-        if(page$type == 2) {
+        if(page$type == PAGE_MIX) {
             row_count_p <- row_count_fp
             base <- 24 + page$subh_count * 12
             base <- base + base %% 8
