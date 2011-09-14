@@ -57,4 +57,6 @@ The risks of entering into a reverse engineering venture can be considerable. In
 
 %alignment issues
 %%C structures can have different sizes, depending on the compiler and platform
+
+%if you discover that some files are big endian, this can be used confirm the length of multi-byte fields that were discovered in little-endian format.
 \end{document}
