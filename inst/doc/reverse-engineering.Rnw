@@ -58,5 +58,10 @@ The risks of entering into a reverse engineering venture can be considerable. In
 %alignment issues
 %%C structures can have different sizes, depending on the compiler and platform
 
-%if you discover that some files are big endian, this can be used confirm the length of multi-byte fields that were discovered in little-endian format.
+\section{Deducing Field Width Using Endianness}
+When a binary field encodes a multi-byte quantity, it may not be clear how many bytes contribute to the value. For instance, suppose that a multi-byte, unsigned integer field is suspected to be four bytes in length, but is only observed for values less than or equal to $2^{16}-1$. In this case, it is possible that the field is only two bytes in length, and the remaining bytes constitute a separate two-byte field. 
+
+If the suspect field is subsequently observed in the opposite endianness, the field length becomes clear. To illustrate, consider the four bytes (in hexadecimal representation) {\tt 01 00 00 00}. Then suppose we observe the same field in opposite endianness. There are several possibilities: 1) {\tt 01 00 00 00} - the field is single byte, {\tt 00 01 00 00} - the field is two-byte, {\tt 00 00 01 00} - the field is three-byte, and {\tt 00 00 00 01} the field is four-byte. 
+
+If there is concern that bytes at a particular offset may form incomplete parts of adjacent fields, then this test for field withd may be misleading. If the byte values observed in opposite endianness cannot be obtained by reordering the original byte values, then these bytes must span two adjacent fields. %if you discover that some files are big endian, this can be used confirm the length of multi-byte fields that were discovered in little-endian format.
 \end{document}
