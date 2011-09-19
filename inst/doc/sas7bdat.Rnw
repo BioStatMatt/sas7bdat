@@ -356,9 +356,9 @@ ascii, release
  & 
 8
  & 
-high
+medium
  & 
-ascii, host
+ascii, host (may be larger than 8 bytes)
  \\
 \hline
 
@@ -507,6 +507,84 @@ bytes 216-239
 \texttt{33 22 00 33 33 01 02 31}
  & 
 \texttt{........9.0201M0Linux...}
+ \\
+\hline
+\end{longtable}
+
+The binary representation for the hexadecimal values present in the table above are given below.
+
+\leavevmode
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable}[c]{|p{0.145\DUtablewidth}|p{0.098\DUtablewidth}|p{0.156\DUtablewidth}|}
+\hline
+\textbf{%
+hexadecimal
+} & \textbf{%
+decimal
+} & \textbf{%
+binary
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+hexadecimal
+} & \textbf{%
+decimal
+} & \textbf{%
+binary
+} \\
+\hline
+\endhead
+\multicolumn{3}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+\texttt{01}
+ & 
+\texttt{001}
+ & 
+\texttt{00000001}
+ \\
+\hline
+
+\texttt{02}
+ & 
+\texttt{002}
+ & 
+\texttt{00000010}
+ \\
+\hline
+
+\texttt{22}
+ & 
+\texttt{034}
+ & 
+\texttt{00010010}
+ \\
+\hline
+
+\texttt{31}
+ & 
+\texttt{049}
+ & 
+\texttt{00011001}
+ \\
+\hline
+
+\texttt{32}
+ & 
+\texttt{050}
+ & 
+\texttt{00011010}
+ \\
+\hline
+
+\texttt{33}
+ & 
+\texttt{051}
+ & 
+\texttt{00011011}
  \\
 \hline
 \end{longtable}
@@ -2292,6 +2370,71 @@ mantissa
  \\
 \hline
 \end{longtable}
+
+
+%___________________________________________________________________________
+
+\subsection*{Dates, Currency, and Formatting%
+  \phantomsection%
+  \addcontentsline{toc}{subsection}{Dates, Currency, and Formatting}%
+  \label{dates-currency-and-formatting}%
+}
+
+Column formatting infomation is encoded within the \hyperref[column-text-subheader]{Column Text Subheader} and \hyperref[column-format-and-label-subheader]{Column Format and Label Subheader}. Columns with formatting information have special meaning and interpretation. For example, numeric values may represent dates, encoded as the number of seconds since midnight, January 1, 1960. The format string for fields encoded this way is ``DATETIME''. Using R, these values may be converted using the as.POSIXct or as.POSIXlt functions with argument \texttt{origin="1960-01-01"}. The most common date format strings correspond to numeric fields, and are interpreted as follows:
+
+\leavevmode
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable}[c]{|p{0.110\DUtablewidth}|p{0.470\DUtablewidth}|p{0.156\DUtablewidth}|}
+\hline
+\textbf{%
+Format
+} & \textbf{%
+Interpretation
+} & \textbf{%
+R Function
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+Format
+} & \textbf{%
+Interpretation
+} & \textbf{%
+R Function
+} \\
+\hline
+\endhead
+\multicolumn{3}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+DATE
+ & 
+Number of days since January 1, 1960
+ & 
+chron::chron
+ \\
+\hline
+
+TIME
+ & 
+Number of seconds since midnight
+ & 
+as.POSIXct
+ \\
+\hline
+
+DATETIME
+ & 
+Number of seconds since January 1, 1960
+ & 
+as.POSIXct
+ \\
+\hline
+\end{longtable}
+
+There are many additional format strings for numeric and character fields.
 
 
 %___________________________________________________________________________
