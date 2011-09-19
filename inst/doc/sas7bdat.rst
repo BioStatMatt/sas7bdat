@@ -2,6 +2,14 @@
 SAS7BDAT Database Binary Format
 ===============================
 
+by:
+
+| Matthew S. Shotwell, PhD
+| Assistant Professor
+| Department of Biostatistics
+| Vanderbilt University
+| matt.shotwell@vanderbilt.edu
+
 Contents
 ========
 
