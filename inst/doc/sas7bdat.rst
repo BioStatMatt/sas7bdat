@@ -2,6 +2,14 @@
 SAS7BDAT Database Binary Format
 ===============================
 
+by:
+
+| Matthew S. Shotwell, PhD
+| Assistant Professor
+| Department of Biostatistics
+| Vanderbilt University
+| matt.shotwell@vanderbilt.edu
+
 Contents
 ========
 
@@ -43,9 +51,9 @@ The figure below illustrates the overall structure of the SAS7BDAT database. Eac
 SAS7BDAT Header
 ===============
 
-The SAS7BDAT file header contains a binary file identifier (*i.e.*, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. All files encountered encode multi-byte values little-endian (least significant byte first). However, it is typical to specify endianness of multi-byte values in a file header.
+The SAS7BDAT file header contains a binary file identifier (*i.e.*, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. Most files encountered encode multi-byte values little-endian (least significant byte first). However, at least one file (written 3/12/1986) uses big-endian. Hence, it appears that multi-byte values are encoded using endianness of the platform where the file was written. It's not certain how the endianness is specified in the file header.
 
-The *offset table* below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. Byte lengths having the form '%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'LE uint, page size := PS' indicates that the data stored at the corresponding location is a little-endian unsigned integer representing the page size, which we denote PS. The description *????????????* indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
+The *offset table* below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. Byte lengths having the form '%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'uint, page size := PS' indicates that the data stored at the corresponding location is a little-endian unsigned integer representing the page size, which we denote PS. The description *????????????* indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
 
 Header Offset Table
 -------------------
@@ -65,35 +73,54 @@ offset		length	conf.	description
 84		8	high	ascii 'SAS FILE'
 92		64	high	ascii, dataset name
 156		8	medium	ascii, file type
-164+164%a	16	high	2x LE double, timestamp, secs since 1/1/60
+164+164%a	16	high	2x double, timestamp, secs since 1/1/60
 180+164%a	16	low	*????????????*
 196+164%a	20	low	*????????????*
-200+164%a	4	high	LE uint, page size := PS
-204+164%a	4	high	LE uint, page count := PC
+200+164%a	4	high	int, page size := PS
+204+164%a	4	high	int, page count := PC
 208+164%a	8	low	*????????????*
 216+164%a	8	high	ascii, release 
-224+164%a	8	high	ascii, host
+224+164%a	8	medium	ascii, host (may be larger than 8 bytes)
 232+164%a	56	low	*????????????*
 288+164%a	48	low	string with timestamps, license?
 336		%1024	medium	filler/zeros
 ==============  ======  ======  ===============================================
 
-The bitmasks at offsets 35, 36, and 37 appear to hold information regarding the offset of the 'release' and 'host' information. The following table describes the possible polymorphisms, where the first column contains the hex values for bytes 35-37, the second column shows bytes 216-239 ('.' represents a non-ASCII character or '\0', 'a' represents an ASCII character), and the third column gives the type of platform data observed there ('WIN_*' represents various Microsoft Windows types, such as 'WIN_NT' and 'WIN_PRO'). Additional data files are needed to investigate this aspect further.
+The 8 bytes beginning at offset 32 appear to hold information regarding the offset of the 'release' and 'host' information. The following table describes some of the possible polymorphisms, where the first column contains the hex values for bytes 32-39, the second column shows bytes 216-239 ('.' represents a non-ASCII character or '\0'). The byte at offset 39 appears to distinguish the file format type, where '1' indicates that the file was generated on a UNIX-like system, such as Linux or SunOS, and '2' indicates the file was generated on a Microsoft Windows platform. Additional data files are needed to investigate these aspects further.
+
+=========================== =========================== ============================
+filename                    bytes 32-39                 bytes 216-239           
+=========================== =========================== ============================
+``compress_no.sas7bdat``    ``22 22 00 32 22 01 02 32`` ``9.0101M3NET_ASRV........``
+``compress_yes.sas7bdat``   ``22 22 00 32 22 01 02 32`` ``9.0101M3NET_ASRV........``
+``lowbwt_i386.sas7bdat``    ``22 22 00 32 22 01 02 32`` ``9.0202M0W32_VSPRO.......``
+``missing_values.sas7bdat`` ``22 22 00 32 22 01 02 32`` ``9.0202M0W32_VSPRO.......``
+``obs_all_perf_1.sas7bdat`` ``22 22 00 32 22 01 02 32`` ``9.0101M3XP_PRO..........``
+``adsl.sas7bdat``           ``22 22 00 33 33 01 02 32`` ``....9.0202M3X64_ESRV....``
+``eyecarex.sas7bdat``       ``22 22 00 33 22 00 02 31`` ``....9.0000M0WIN.........``
+``lowbwt_x64.sas7bdat``     ``22 22 00 33 33 01 02 32`` ``....9.0202M2X64_VSPRO...``
+``natlterr1994.sas7bdat``   ``33 22 00 33 33 00 02 31`` ``........9.0101M3SunOS...``
+``natlterr2006.sas7bdat``   ``33 22 00 33 33 00 02 31`` ``........9.0101M3SunOS...``
+``txzips.sas7bdat``         ``33 22 00 33 33 01 02 31`` ``........9.0201M0Linux...``
+=========================== =========================== ============================
+
+The binary representation for the hexadecimal values present in the table above are given below.
+
+===========  =======  ============
+hexadecimal  decimal  binary
+===========  =======  ============
+``01``       ``001``  ``00000001``
+``02``       ``002``  ``00000010``
+``22``       ``034``  ``00010010``
+``31``       ``049``  ``00011001``
+``32``       ``050``  ``00011010``
+``33``       ``051``  ``00011011``
+===========  =======  ============
 
 Alignment
 ---------
 
 In files generated by 64 bit builds of SAS, 'Align' means that the offset of this data field should be advanced so that the offset is a factor of 8 bytes. For files generated by 32 bit builds of SAS, the alignment is 4 bytes. Because `SAS7BDAT Packed Binary Data`_ potentially consist of doubles, it seems that all data rows are 64 bit aligned, regardless of whether the file was written with a 32 bit or 64 bit build of SAS. Alignment of data structures according to the platform word length (4 bytes for 32 bit, and 8 bytes for 64 bit architectures) facilitates efficient operations on data stored in memory. It also suggests that parts of SAS7BDAT data file format are platform dependent. One theory is that the SAS implementation utilizes a common C or C++ structure or class to reference data stored in memory. When compiled, these structures are aligned according to the word length of the target platform. Of course, when SAS was originally written, platform differences may not have been forseeable. Hence, these inconsistencies may not have been intentional.
-
-===========  ========================  ===============
-bytes 35-37  host + release data       platform
-===========  ========================  ===============
-32 22 01     aaaaaaaaaaaaaaaa........  WIN_* and Linux
-33 22 00     ....aaaaaaaaaaaa........  WIN
-33 33 00     ........aaaaaaaaaaaaaaaa  SunOS
-===========  ========================  ===============
-
-The byte at offset 39 appears to distinguish the file format type, where '1' indicates that the file was generated on a UNIX-like system, such as Linux or SunOS, and '2' indicates the file was generated on a Microsoft Windows platform.
 
 Magic Number
 ------------
@@ -121,14 +148,14 @@ offset		length	conf.	description
 0		4	low	*????????????* (sometimes repeated) 
 4		8	low	*????????????* (not critical)
 12		4	low	*????????????* row/col related (not critical)
-16		1	low	*????????????*
-17              1       medium	LE uint, page type meta/data/mix/amd (0/1/2/4)
+16		2	medium	int, page type meta/data/mix/amd (0/256/512/1024)
 18 (meta/mix)	2	low	*????????????*
-20 (meta/mix)	4	medium	LE uint, number of `subheader pointers`_ := L
+20 (meta/mix)	2	medium	int, number of `subheader pointers`_ := L
+22 (meta/mix)	2	low	*????????????*
 24 (meta/mix)	L*12	medium	L `subheader pointers`_, 24+L*12 := M
 M  (meta)	%PS	medium  subheader data
 M+M%8   (mix)	%PS	medium	`SAS7BDAT packed binary data`_
-18 (data)       4	medium	LE uint, page row count 
+18 (data)       4	medium	int, page row count 
 24 (data)	%PS	medium  `SAS7BDAT packed binary data`_	
 ==============  ======  ======  ===============================================
 
@@ -146,10 +173,10 @@ The `subheader pointers`_ encode information about the offset and length of subh
 ==============  ======  ======  ===============================================
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
-0		4	high	LE uint, offset from page start to subheader
-4		4	high	LE uint, length of subheader := H 
-8		1	low	LE uint, optional (0/1)?
-9		1	low	LE uint, continue next page (0/1)?
+0		4	high	int, offset from page start to subheader
+4		4	high	int, length of subheader := H 
+8		1	low	int, optional (0/1)?
+9		1	low	int, continue next page (0/1)?
 10		2	low	*????????????*
 ==============  ======  ======  ===============================================
 
@@ -171,14 +198,14 @@ offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary, signature F7F7F7F7
 4		16	low	*????????????*
-20		4	medium	LE uint, row length (in bytes)
-24		12	medium	LE uint, row count := r (12 bytes?)
-36		4	medium	LE uint, partial column count := CC1
-40		4	medium	LE uint, partial column count := CC2
+20		4	medium	int, row length (in bytes)
+24		12	medium	int, row count := r (12 bytes?)
+36		4	medium	int, partial column count := CC1
+40		4	medium	int, partial column count := CC2
 44		8	low	*????????????*
-52		4	low	LE uint, page size?
+52		4	low	int, page size?
 56		4	low	*????????????*
-60		4	medium	LE uint, max row count on "mix" page 
+60		4	medium	int, max row count on "mix" page 
 64		8	medium	sequence of 8 FF, end of header
 72		%H	low	filler
 ==============  ======  ======  ===============================================
@@ -194,7 +221,7 @@ The `column size subheader`_ holds the column count.
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary, signature F6F6F6F6
-4		8	medium	LE uint, column count := CC 
+4		8	medium	int, column count := CC 
 ==============  ======  ======  ===============================================
 
 
@@ -223,10 +250,12 @@ The subheader count vectors encode information for each of 7 common subheader ty
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary signature (see list below)
-4		4	medium	LE uint, page where this subheader first appears := PAGE1
-8		4	medium	LE uint, position of subheader pointer in PAGE1 := LOC1
-12		4	medium	LE uint, page where this subheader last appears := PAGEL
-16		4	medium	LE uint, position of subheader pointer in PAGEL := LOCL
+4		4	medium	int, page where this subheader first appears := PAGE1
+8		2	medium	int, position of subheader pointer in PAGE1 := LOC1
+10		2	low	*????????????*
+12		4	medium	int, page where this subheader last appears := PAGEL
+16		2	medium	int, position of subheader pointer in PAGEL := LOCL
+18		2	low	*????????????*	
 ==============  ======  ======  ===============================================
 
 The LOC1 and LOCL give the positions of the corresponding subheader pointer in PAGE1 and PAGEL, respectively. That is, if there are L subheader pointers on page PAGE1, then the corresponding subheader pointer first occurs at the LOC1'th position in this array, enumerating from 1. If PAGE1=0, the subheader is not present. If PAGE1=PAGEL and LOC1=LOCL, the subheader appears exactly once. If PAGE1!=PAGEL or LOC1!=LOCL, the subheader appears 2 or more times. In all test files, PAGE1 <= PAGEL, and the corresponding subheaders appear only once per page. 
@@ -258,7 +287,7 @@ The column text subheader contains all text associated with columns, including t
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary, signature FDFFFFFF
-4		12	medium	LE uint, length of remaining subheader
+4		12	medium	int, length of remaining subheader
 16		60	medium	ascii, proc name that generated data?
 76		%H	high	ascii, combined column names, labels, formats
 ==============  ======  ======  ===============================================
@@ -276,7 +305,7 @@ Column name subheaders contain a sequence of `column name pointers`_ to the offs
 offset		length	conf.	description
 ==============  ======  ======  ====================================================
 0		4	medium	binary, signature FFFFFFFF
-4		8	medium	LE uint, length of remaining subheader
+4		8	medium	int, length of remaining subheader
 12		8*CMAX	medium	`column name pointers`_ (see below), CMAX=(H-12-8)/8
 12+8*CMAX	8	low	filler
 ==============  ======  ======  ====================================================
@@ -289,9 +318,9 @@ Column Name Pointers
 ==============  ======  ======  ======================================================
 offset		length	conf.	description
 ==============  ======  ======  ======================================================
-0		2	medium	LE uint, column name index to select `Column Text Subheader`_
-2		2	medium	LE uint, column name offset w.r.t. FDFFFFFF
-4		2	medium	LE uint, column name length
+0		2	medium	int, column name index to select `Column Text Subheader`_
+2		2	medium	int, column name offset w.r.t. FDFFFFFF
+4		2	medium	int, column name length
 6		2	low	binary, zeros
 ==============  ======  ======  ======================================================
 
@@ -305,7 +334,7 @@ The column attribute subheader holds information regarding the column offsets wi
 offset          length   conf.   description
 ==============  =======  ======  ===================================================
 0               4        medium  binary, signature FCFFFFFF
-4               8        medium  LE uint, length of remaining subheader
+4               8        medium  int, length of remaining subheader
 12              12*CMAX  medium  `column attributes`_ (see below), CMAX=(H-12-8)/12
 12+12*CMAX      8        medium  filler
 ==============  =======  ======  ===================================================
@@ -316,10 +345,11 @@ Column Attributes
 ==============  ======  ======  ===============================================
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
-0		4	medium	LE uint, column offset in w.r.t. row
-4		4	medium	LE uint, column width
+0		4	medium	int, column offset in w.r.t. row
+4		4	medium	int, column width
 8		2	low	name length flag
-10		2	medium	LE uint, column type (01-num, 02-chr)
+10		1	medium	int, column type (01-num, 02-chr)
+11		1	low	*????????????*
 ==============  ======  ======  ===============================================
 
 Observed values of name length flag in the source files:
@@ -344,12 +374,12 @@ offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary, signature FEFBFFFF
 4		30	low	*????????????*
-34		2	medium	LE uint, column format index to select `Column Text Subheader`_
-36		2	medium	LE uint, column format offset wrt FDFFFFFF
-38		2	medium	LE uint, column format length
-40		2	medium	LE uint, column label index to select `Column Text Subheader`_
-42		2	medium	LE uint, column label offset wrt FDFFFFFF
-44		2	medium	LE uint, column label length
+34		2	medium	int, column format index to select `Column Text Subheader`_
+36		2	medium	int, column format offset wrt FDFFFFFF
+38		2	medium	int, column format length
+40		2	medium	int, column label index to select `Column Text Subheader`_
+42		2	medium	int, column label offset wrt FDFFFFFF
+44		2	medium	int, column label length
 46		6	low	*????????????*
 ==============  ======  ======  ===============================================
 
@@ -362,14 +392,14 @@ The purpose of this subheader is not clear. But the structure is partly identifi
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		4	medium	binary, signature FEFFFFFF
-4		2	medium	LE uint, length of remaining subheader
+4		2	medium	int, length of remaining subheader
 6		6	low	*????????????* 
-12		2	medium	LE uint, length of remaining subheader
+12		2	medium	int, length of remaining subheader
 14		2	low	*????????????* 
-16		2	low	LE uint, usually equals CC
-18		2	medium	LE uint, length of column list := CL
-20		2	low	LE uint, usually 1
-22		2	low	LE uint, usually equals CC
+16		2	low	int, usually equals CC
+18		2	medium	int, length of column list := CL
+20		2	low	int, usually 1
+22		2	low	int, usually equals CC
 24		6	low	*????????????*
 30		2*CL	medium	`column list values`_ (see below)
 30+2*CL		8	low	usually zeros
@@ -401,6 +431,21 @@ size      bytes  sign  exponent  mantissa  ``M``
 56bit     7      1     11        44          35184372088832
 64bit     8      1     11        52        9007199254740990
 =====     =====  ====  ========  ========  ================
+
+Dates, Currency, and Formatting
+-------------------------------
+
+Column formatting infomation is encoded within the `Column Text Subheader`_ and `Column Format and Label Subheader`_. Columns with formatting information have special meaning and interpretation. For example, numeric values may represent dates, encoded as the number of seconds since midnight, January 1, 1960. The format string for fields encoded this way is "DATETIME". Using R, these values may be converted using the as.POSIXct or as.POSIXlt functions with argument ``origin="1960-01-01"``. The most common date format strings correspond to numeric fields, and are interpreted as follows:
+
+========  =======================================  ============
+Format    Interpretation                           R Function
+========  =======================================  ============
+DATE      Number of days since January 1, 1960     chron::chron
+TIME      Number of seconds since midnight         as.POSIXct
+DATETIME  Number of seconds since January 1, 1960  as.POSIXct
+========  =======================================  ============
+
+There are many additional format strings for numeric and character fields.
 
 Platform Differences
 ====================
@@ -446,7 +491,7 @@ Disadvantages:
 
 ToDo
 ====
-
+- what are CC1 and CC2 for?
 - experiment further with 'amendment page' concept
 - consider header bytes -by- SAS_host
 - check that only one page of type "mix" is observed. If so insert "In all test cases (``data/sources.csv``), there are exactly zero or one pages of type 'mix'." under the `Page Offset Table`_ header.  
@@ -455,4 +500,4 @@ ToDo
 - determine other bytes in subheader with signature FEFBFFFF
 - identify how non-ASCII encoding is specified
 - identify SAS7BDAT compression and encryption methods (this is not the same as 'cracking', or breaking encryption): data files may be compressed using the RLE (CHAR) and RDC (BINARY) algorithms.
-
+- implement options to read just header (and subheader) information without data, and an option to read just some data fields, and not all fields.
