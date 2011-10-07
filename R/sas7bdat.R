@@ -21,7 +21,8 @@ CAUTION   <- "please verify data correctness"
 KNOWNHOST <- c("WIN_PRO", "WIN_NT", "WIN_NTSV", "WIN_SRV",
                "WIN_ASRV", "XP_PRO", "XP_HOME", "NET_ASRV",
                "NET_DSRV", "NET_SRV", "WIN_98", "W32_VSPR",
-               "WIN", "WIN_95", "X64_VSPR", "X64_ESRV")
+               "WIN", "WIN_95", "X64_VSPR", "X64_ESRV",
+               "W32_ESRV")
 
 # Subheader 'signatures'
 SUBH_ROWSIZE <- as.raw(c(0xF7,0xF7,0xF7,0xF7))
@@ -221,13 +222,12 @@ read.sas7bdat <- function(file) {
         pages[[page_num]]$page <- page_num
         pages[[page_num]]$data <- readBin(con, "raw", page_size, 1)
         pages[[page_num]]$type <- read_int(pages[[page_num]]$data, 16, 2)
+        if(!(pages[[page_num]]$type %in% PAGE_ANY))
+            stop(paste("page", page_num, "has unknown type:",
+                pages[[page_num]]$type, BUGREPORT))
         if(pages[[page_num]]$type %in%  PAGE_META_MIX_AMD)
             pages[[page_num]]$subh_count <- read_int(pages[[page_num]]$data, 20, 2)
     }
-
-    if(any(sapply(pages, function(page) !(page$type %in% PAGE_ANY))))
-        stop(paste("page", page_num, "has unknown type:",
-            pages[[page_num]]$type, BUGREPORT))
 
     # Read subheaders
     subhs <- list()
