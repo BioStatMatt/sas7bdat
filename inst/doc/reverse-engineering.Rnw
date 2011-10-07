@@ -13,7 +13,7 @@ The risks of entering into a reverse engineering venture can be considerable. In
 
 Statistical data files are regular computer files that contain structured data, such as a table of records and fields. A data file may also contain metadata, such as a record count or field labels. A file {\it format} is a specification that determines how structured data and metadata are organized into a computer file. Hence, a file format describes a serialization of stuctured data into a sequence of bytes ({\it i.e.}, eight bit binary values).
 
-Formatted data may be human readable, that is, consisting of bytes that are interpreted as character strings ({\it e.g.}, comma separated values). Encoded data that are not human readable are generically said to have 'binary' formatting ({\it e.g.,} XBase and dBase formats, \cite{XBase2010}).
+%Formatted data may be human readable, that is, consisting of bytes that are interpreted as character strings ({\it e.g.}, comma separated values). Encoded data that are not human readable are generically said to have 'binary' formatting ({\it e.g.,} XBase and dBase formats, \cite{XBase2010}).
 
 %@misc{XBase2010,
 %    author = {Erik Bachmann},
