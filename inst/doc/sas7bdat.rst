@@ -148,7 +148,7 @@ offset		length	conf.	description
 0		4	low	*????????????* (sometimes repeated) 
 4		8	low	*????????????* (not critical)
 12		4	low	*????????????* row/col related (not critical)
-16		2	medium	int, page type meta/data/mix/amd (0/256/512/1024)
+16		2	medium	int, bit field `page type`_
 18 (meta/mix)	2	low	*????????????*
 20 (meta/mix)	2	medium	int, number of `subheader pointers`_ := L
 22 (meta/mix)	2	low	*????????????*
@@ -158,6 +158,11 @@ M+M%8   (mix)	%PS	medium	`SAS7BDAT packed binary data`_
 18 (data)       4	medium	int, page row count 
 24 (data)	%PS	medium  `SAS7BDAT packed binary data`_	
 ==============  ======  ======  ===============================================
+
+Page Type
+---------
+
+There are at least four page types 'meta', 'data', 'mix', and 'amd'. These types are encoded in the most significant byte of a two byte bit field at offset 16. If no bit is set, the following page is of type 'meta'. If the first, second, or third bits are set, then the page is of type 'data', 'mix', or 'amd', respectively. Hence, if the two bytes are interpreted as an unsigned integer, then the 'meta', 'data', 'mix', and 'amd' types correspond to 0, 256, 512, and 1024, respectively. In compressed files, other bits (and sometimes multiple bits) have been set (e.g., ``1 << 16 | 1 << 13``, which is ``-28672`` signed, or ``36864`` unsigned). However, the pattern is unclear.
 
 If a page is of type 'meta', 'mix', or 'amd', data beginning at offset byte 24 are a sequence of L 12-byte `subheader pointers`_, which point to an offset farther down the page. `SAS7BDAT Subheaders`_ stored at these offsets hold meta information about the database, including the column names, labels, and types.    
 
