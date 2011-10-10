@@ -51,7 +51,7 @@ The figure below illustrates the overall structure of the SAS7BDAT database. Eac
 SAS7BDAT Header
 ===============
 
-The SAS7BDAT file header contains a binary file identifier (*i.e.*, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. Most files encountered encode multi-byte values little-endian (least significant byte first). However, at least one file (written 3/12/1986) uses big-endian. Hence, it appears that multi-byte values are encoded using endianness of the platform where the file was written. It's not certain how the endianness is specified in the file header.
+The SAS7BDAT file header contains a binary file identifier (*i.e.*, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. Most files encountered encode multi-byte values little-endian (least significant byte first). However, at least one file (written 3/12/1986) has big-endian values. Hence, it appears that multi-byte values are encoded using endianness of the platform where the file was written. 
 
 The *offset table* below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. Byte lengths having the form '%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'uint, page size := PS' indicates that the data stored at the corresponding location is a little-endian unsigned integer representing the page size, which we denote PS. The description *????????????* indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
 
@@ -64,7 +64,8 @@ offset		length	conf.	description
 0		32	high	binary, `magic number`_ 
 32		3	low	*????????????*
 35		2	low	bitmasks? Alignment_ := a (x3222-4 x3333-8)
-37		2	low	*????????????*
+37		1	low	endianness (x01-little x00-big)
+38		1	low	*????????????*
 39		1	low	ascii, file format version (1-UNIX or 2-WIN)
 40		8	low	*????????????*
 48		8	low	*????????????*
@@ -131,6 +132,13 @@ The SAS7BDAT magic number is the following 32 byte (hex) sequence.::
    00 00 00 00   c2 ea 81 60
    b3 14 11 cf   bd 92 08 00
    09 c7 31 8c   18 1f 10 11
+
+Other Notes
+-----------
+From Clint Cummins (yet to be incorporated properly into this document, or the prototype reader):
+
+    1A. If byte at offset 35 = 33h,  there is a 4 byte filler 00 00 00 00 inserted at offset 164 (between "file type" and "time stamp")
+    1B. If byte at offset 32 = 33h,  there are 4 extra bytes inserted somewhere between "time stamp" and "release". All these files are Linux or SunOS with IOA=8, and none of them have valid PS or PC at the expected positions. So all we really know about them is where the release and host fields are.
 
 SAS7BDAT Pages
 ==============
