@@ -22,7 +22,7 @@ KNOWNHOST <- c("WIN_PRO", "WIN_NT", "WIN_NTSV", "WIN_SRV",
                "WIN_ASRV", "XP_PRO", "XP_HOME", "NET_ASRV",
                "NET_DSRV", "NET_SRV", "WIN_98", "W32_VSPR",
                "WIN", "WIN_95", "X64_VSPR", "X64_ESRV",
-               "W32_ESRV")
+               "W32_ESRV", 'W32_7PRO')
 
 # Subheader 'signatures'
 SUBH_ROWSIZE <- as.raw(c(0xF7,0xF7,0xF7,0xF7))
@@ -36,9 +36,9 @@ SUBH_SUBHCNT <- as.raw(c(0x00,0xFC,0xFF,0xFF))
 
 # Page types
 PAGE_META <- 0
-PAGE_DATA <- 256
-PAGE_MIX  <- 512
-PAGE_AMD  <- 1024
+PAGE_DATA <- 256        #1<<8
+PAGE_MIX  <- c(512,640) #1<<9,1<<9|1<<7
+PAGE_AMD  <- 1024       #1<<10
 PAGE_MIX_DATA <- c(PAGE_MIX, PAGE_DATA)
 PAGE_META_MIX_AMD <- c(PAGE_META, PAGE_MIX, PAGE_AMD)
 PAGE_ANY  <- c(PAGE_META_MIX_AMD, PAGE_DATA)
@@ -328,7 +328,7 @@ read.sas7bdat <- function(file) {
         #FIXME are there data on pages of type 4?
         if(!(page$type %in% PAGE_MIX_DATA))
             next 
-        if(page$type == PAGE_MIX) {
+        if(page$type %in% PAGE_MIX) {
             row_count_p <- row_count_fp
             base <- 24 + page$subh_count * 12
             base <- base + base %% 8
