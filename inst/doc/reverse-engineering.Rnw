@@ -60,10 +60,19 @@ Statistical data files are regular computer files that contain structured data, 
 %alignment issues
 %%C structures can have different sizes, depending on the compiler and platform
 
+\section{The Knockout Strategy}
+%This is the strategy of modifying (breaking) fields that have unknown meaning, and then attempting to open the file using software design to open the file. The software may reveal the field's purpose.
+
 \section{Deducing Field Width Using Endianness}
 When a binary field encodes a multi-byte quantity, it may not be clear how many bytes contribute to the value. For instance, suppose that a multi-byte, unsigned integer field is suspected to be four bytes in length, but is only observed for values less than or equal to $2^{16}-1$. In this case, it is possible that the field is only two bytes in length, and the remaining bytes constitute a separate two-byte field. 
 
 If the suspect field is subsequently observed in the opposite endianness, the field length becomes clear. To illustrate, consider the four bytes (in hexadecimal representation) {\tt 01 00 00 00}. Then suppose we observe the same field in opposite endianness. There are several possibilities: 1) {\tt 01 00 00 00} - the field is single byte, {\tt 00 01 00 00} - the field is two-byte, {\tt 00 00 01 00} - the field is three-byte, and {\tt 00 00 00 01} the field is four-byte. 
 
 If there is concern that bytes at a particular offset may form incomplete parts of adjacent fields, then this test for field withd may be misleading. If the byte values observed in opposite endianness cannot be obtained by reordering the original byte values, then these bytes must span two adjacent fields. %if you discover that some files are big endian, this can be used confirm the length of multi-byte fields that were discovered in little-endian format.
+\section{Legality}
+Some material from:
+https://www.eff.org/issues/coders/reverse-engineering-faq
+
+Among intellectual property laws, including Copyright and fair use (17 U.S.C. 107), DMCA (17 U.S.C. section 1201), trade secrets (Uniform trade secrets act with amendments 1985), Contract law (EULA, TOS, TOU, NDA, developer or API agreement), Electronics Communications Privacy Act (18 U.S.C. 2510 et.seq.), trade secret law is most directly impacts reverse engineering of statistical data files (since copyright (of code), cracking, are not involved, but be careful about TOS and EULAs). However, the UTSA makes explicit that reverse engineering is a {\it proper} means.
+
 \end{document}
