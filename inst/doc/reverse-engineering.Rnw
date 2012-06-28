@@ -1,19 +1,34 @@
 \documentclass{article}
 \usepackage{natbib}
 \begin{document}
-%tools and strategies for reverse engineering statistical data files
+\begin{center}
+Tools and Strategies for Reverse Engineering the Format of Statistical Data Files\\
+\vspace{0.5cm}
+Matt Shotwell\\
+\vspace{0.2cm}
+Vanderbilt University
+\end{center}
+\vspace{1cm}
 
 \section{Introduction}
-Reverse engineering is much like forensics. At a point in the past, the process under investigation was conceived and implemented. The consequences are observable, but details of the design and implementation are lost, or concealed. Forensics, and reverse engineering venture to recover the details.
+Reverse engineering is much like forensics. At some point in the past, the process was conceived and implemented. In the present, the input and output are observable, but the process itself is a {\it black box}, that is, the details of its design and implementation have been lost, or concealed. Forensics, and reverse engineering attempt to recover the details.
 
 %Rewards and risks
-The risks of entering into a reverse engineering venture can be considerable. Indeed, the principal risk is failure to sufficiently recover the details that explain the process under investigation. This is compounded by the consequences that may arise regarless of success or failure. For instance, merely the attempting to reverse engineer certain computer software may be in violation of the associated end-user license agreement. In an extreme example, an attempt to `crack' encrypted communications through reverse engineering may be considered illegal.
+The risks of a reverse engineering venture may be considerable. Indeed, the principal risk is failure to recover the details of a process under study. This is compounded by the consequences that may arise regardless of success or failure. For instance, merely the attempt to reverse engineer certain computer software may be in violation of the associated end-user license agreement. In an extreme example, an attempt to ``crack'' encrypted communications may be illegal.
 
 %Baggerly and Coombes "forensic bioinformatics"
 
-Statistical data files are regular computer files that contain structured data, such as a table of records and fields. A data file may also contain metadata, such as a record count or field labels. A file {\it format} is a specification that determines how structured data and metadata are organized into a computer file. Hence, a file format describes a serialization of stuctured data into a sequence of bytes ({\it i.e.}, eight bit binary values).
+%Statistical data files whose format descriptions are distributed under commercial license, or otherwise unpublished, impose a barrier to reproducible research. Because such formats generally require the user to purchase and learn to operate an associated software package, the barriers are financial and practical in nature. In the worst case, the necessary software may cease to be supported, or become unavailable, rendering formatted data inaccessable.
 
-%Formatted data may be human readable, that is, consisting of bytes that are interpreted as character strings ({\it e.g.}, comma separated values). Encoded data that are not human readable are generically said to have 'binary' formatting ({\it e.g.,} XBase and dBase formats, \cite{XBase2010}).
+%This article aims to facilitate the process of reverse engineering to identify format of statistical data files. This content is appropriate for readers with programming skill that is typical of most statisticians. Indeed, the statisitcal programming enviroment R provides a familiar and useful framework for developing a reverse engineering toolkit.
+
+\section{Prerequisites}
+
+This discussion assumes familiarity with some modern computer concepts, such as file input and output, and how computers store data in bits and bytes. References are given throughout for further reading on key concepts. 
+
+Statistical data files are regular computer files that contain structured data, such as a table of records and fields. A data file may also contain metadata, such as a record count or field labels. A file {\it format} is a specification that determines how structured data and metadata are organized into a computer file. Logically, a computer file is simply a sequence of eight bit binary values(bytes). Hence, a file format describes how structured data ({\it e.g.} integers, text) are (1) represented and (2) serialized in a sequence of bytes.
+
+Formatted data may be human readable, that is, consisting of bytes that are interpreted as character strings ({\it e.g.}, comma separated values). Encoded data that are not human readable are generically said to have 'binary' formatting ({\it e.g.,} XBase and dBase formats, \cite{XBase2010}).
 
 %@misc{XBase2010,
 %    author = {Erik Bachmann},
@@ -24,12 +39,6 @@ Statistical data files are regular computer files that contain structured data, 
 %    url = {http://www.clicketyclick.dk/databases/xbase/format/index.html}
 %}
 
-%Statistical data files whose format descriptions are distributed under commercial license, or otherwise unpublished, impose a barrier to reproducible research. Because such formats generally require the user to purchase and learn to operate an associated software package, the barriers are financial and practical in nature. In the worst case, the necessary software may cease to be supported, or become unavailable, rendering useless any data in the associated format.
-
-%
-\section{Prerequisites}
-
-%This document assumes familiarity with some modern computer concepts, such as file input and output, binary representations of integers, floating-point numbers, and character strings, and counting in the binary (base 2), octal (base 8), and hexadecimal (base 16) number systems. The following discussion references several resources to help prepare the would-be reverse engineer. However, even these resources assume the reader is comfortable with basic computer concepts, for instance, the meaning of {\it bit} and {\it byte}. 
 
 % Perhaps reference Knuth, The Art of Computer Programming (no, don't think this reference is useful)
 
