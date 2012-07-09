@@ -14,6 +14,71 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+# Download all files listed in sas7bdat.sources
+# path - where to save files
+# max.size - limit on the size of downloaded files (bytes)
+download.sas7bdat.sources <- function(path=normalizePath("."), max.size=2^20) {
+    data(sas7bdat.sources)
+    ss <- sas7bdat.sources
+    # don't download zip files or files larger than max.size
+    ss <- subset(ss, !grepl(".zip$", ss$url) & ss$uncompressed < max.size)
+    if(!file.exists(path))
+        dir.create(path)
+    apply(ss, 1, function(r) download.file(r["url"], file.path(path, r["filename"])))
+}
+
+# Compress a file on disk
+# desc - file path
+# type - compression type ("gzip", "bzip2", "xz")
+file.compress <- function(desc, type = "gzip") {
+    if(type == "gzip") {
+        ext <- ".gz"; cfile <- gzfile
+    } else if(type == "bzip2") {
+        ext <- ".bz2"; cfile <- bzfile
+    } else if(type == "xz") {
+        ext <- ".xz"; cfile <- xzfile
+    } else {
+        stop("compression 'type' unrecognized")
+    }
+    inp <- file(desc, open="rb")
+    oup <- cfile(paste(desc, ext, sep=""), open="wb")
+    while(length(dat <- readBin(inp, "raw", 2^13)) > 0)
+        writeBin(dat, oup)
+    close(inp)
+    close(oup)
+    return(paste(desc, ext, sep=""))
+}
+
+# Generate an entry for sas7bdat.sources
+# fn - a local file name
+# url - url of the file
+generate.sas7bdat.source <- function(fn, url) {
+    download.file(url, fn)
+    sz <- file.info(fn)$size
+    cat("gzip compress...")
+    fn.gz <- file_compress(fn, "gzip")
+    sz.gz <- file.info(fn.gz)$size
+    cat("done\nbzip2 compress...")
+    fn.bz2 <- file_compress(fn, "bzip2")
+    sz.bz2 <- file.info(fn.bz2)$size
+    cat("done\nxz compress...")
+    fn.xz <- file_compress(fn, "xz")
+    sz.xz <- file.info(fn.xz)$size
+    cat("done\nparsing file...")
+    dat <- try(read.sas7bdat(fn))
+    cat("done\n")
+    if(inherits(dat, "try-error")) {
+      dat <- dat[1]
+    } else {
+      dat <- "OK"
+    }
+    data.frame(
+        filename = fn, date = Sys.time(), uncompressed = sz,
+        gzip = sz.gz, bzip2 = sz.bz2, xz = sz.xz, url = url,
+        version = VERSION, message = dat, stringsAsFactors=FALSE)
+}
+    
+VERSION   <- "0.2"
 BUGREPORT <- "please report bugs to sas7bdatRbugs@gmail.com"
 CAUTION   <- "please verify data correctness"
 
