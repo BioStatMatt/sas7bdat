@@ -305,9 +305,7 @@ offset		length	conf.	description
 76		%H	high	ascii, combined column names, labels, formats
 ==============  ======  ======  ===============================================
 
-This subheader sometimes appears more than once; each is a separate array.
-If so, the "column name index" field in `column name pointers`_ selects a particular text array - 0 for the first array, 1 for the second, etc.
-Similarly, "column format index" and "column label index" fields also select a text array.
+This subheader sometimes appears more than once; each is a separate array. If so, the "column name index" field in `column name pointers`_ selects a particular text array - 0 for the first array, 1 for the second, etc. Similarly, "column format index" and "column label index" fields also select a text array. For compressed files, the type of compression is indicated within the field at offset 16 of the first column text subheader. In particular, if the first eight bytes are ascii "SASYZCRL", then the file was generated with the option COMPRESS=YES, and data are apparently compressed using a simple run-length encoding (RLE) algorithm. 
 
 Column Name Subheader
 ---------------------

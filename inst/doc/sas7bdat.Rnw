@@ -65,6 +65,8 @@
 \maketitle
 
 by:
+%
+\begin{quote}
 
 \begin{DUlineblock}{0em}
 \item[] Matthew S. Shotwell, PhD
@@ -73,6 +75,8 @@ by:
 \item[] Vanderbilt University
 \item[] \href{mailto:matt.shotwell@vanderbilt.edu}{matt.shotwell@vanderbilt.edu}
 \end{DUlineblock}
+
+\end{quote}
 
 
 %___________________________________________________________________________
@@ -1591,9 +1595,7 @@ ascii, combined column names, labels, formats
 \hline
 \end{longtable}
 
-This subheader sometimes appears more than once; each is a separate array.
-If so, the ``column name index'' field in \hyperref[column-name-pointers]{column name pointers} selects a particular text array - 0 for the first array, 1 for the second, etc.
-Similarly, ``column format index'' and ``column label index'' fields also select a text array.
+This subheader sometimes appears more than once; each is a separate array. If so, the ``column name index'' field in \hyperref[column-name-pointers]{column name pointers} selects a particular text array - 0 for the first array, 1 for the second, etc. Similarly, ``column format index'' and ``column label index'' fields also select a text array. For compressed files, the type of compression is indicated within the field at offset 16 of the first column text subheader. In particular, if the first eight bytes are ascii ``SASYZCRL'', then the file was generated with the option COMPRESS=YES, and data are apparently compressed using a simple run-length encoding (RLE) algorithm.
 
 
 %___________________________________________________________________________
