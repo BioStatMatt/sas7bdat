@@ -53,16 +53,18 @@ file.compress <- function(desc, type = "gzip") {
 # fn - a local file name
 # url - url of the file
 generate.sas7bdat.source <- function(fn, url) {
-    download.file(url, fn)
+    dl <- try(download.file(url, fn))
+    if(inherits(dl, "try-error") || dl != 0)
+        return(FALSE)
     sz <- file.info(fn)$size
     cat("gzip compress...")
-    fn.gz <- file_compress(fn, "gzip")
+    fn.gz <- file.compress(fn, "gzip")
     sz.gz <- file.info(fn.gz)$size
     cat("done\nbzip2 compress...")
-    fn.bz2 <- file_compress(fn, "bzip2")
+    fn.bz2 <- file.compress(fn, "bzip2")
     sz.bz2 <- file.info(fn.bz2)$size
     cat("done\nxz compress...")
-    fn.xz <- file_compress(fn, "xz")
+    fn.xz <- file.compress(fn, "xz")
     sz.xz <- file.info(fn.xz)$size
     cat("done\nparsing file...")
     dat <- try(read.sas7bdat(fn))
@@ -76,6 +78,20 @@ generate.sas7bdat.source <- function(fn, url) {
         filename = fn, date = Sys.time(), uncompressed = sz,
         gzip = sz.gz, bzip2 = sz.bz2, xz = sz.xz, url = url,
         version = VERSION, message = dat, stringsAsFactors=FALSE)
+}
+
+update.sas7bdat.source <- function(df) {
+    re <- generate.sas7bdat.source(df$filename, df$url)
+    if(inherits(re, "logical")) return(df)
+    return(re)
+}
+
+
+# Update sas7bdat.sources
+update.sas7bdat.sources <- function(ss) {
+    for(i in 1:nrow(sas7bdat.sources))
+        ss[i,] <- update.sas7bdat.source(ss[i,])
+    return(ss)
 }
     
 VERSION   <- "0.2"
@@ -280,7 +296,6 @@ read.sas7bdat <- function(file) {
     if(!(SAS_host %in% KNOWNHOST))
         stop(paste("unknown host", SAS_host, BUGREPORT))
 
-    
     # Read pages
     pages <- list()
     for(page_num in 1:page_count) {
@@ -288,9 +303,6 @@ read.sas7bdat <- function(file) {
         pages[[page_num]]$page <- page_num
         pages[[page_num]]$data <- readBin(con, "raw", page_size, 1)
         pages[[page_num]]$type <- read_int(pages[[page_num]]$data, 16, 2)
-        if(!(pages[[page_num]]$type %in% PAGE_ANY))
-            stop(paste("page", page_num, "has unknown type:",
-                pages[[page_num]]$type, BUGREPORT))
         if(pages[[page_num]]$type %in%  PAGE_META_MIX_AMD)
             pages[[page_num]]$subh_count <- read_int(pages[[page_num]]$data, 20, 2)
     }
@@ -299,30 +311,6 @@ read.sas7bdat <- function(file) {
     subhs <- list()
     for(page in pages)
         subhs <- c(subhs, read_subheaders(page)) 
-
-    # Parse subheaders
-
-    # Parse subheader count subheader
-    # At present, the data stored in this subheader is not
-    # necessary, but might be used in the future for verification.
-    # The column attribute, text, name, and list subheaders are 
-    # known to occur multiple times.
-
-    #subh_cnt <- get_subhs(subhs, SUBH_SUBHCNT)
-    #if(length(subh_cnt) != 1)
-    #    stop(paste("found", length(subh_cnt),
-    #        "subheader count subheaders where 1 expected", BUGREPORT))
-    #subh_cnt <- subh_cnt[[1]]
-    #subh_cnts <- list()
-    #for(scnt in 1:11) {
-    #    base <- 84 + (scnt - 1) * 20
-    #    subh_cnts[[scnt]]       <- list()
-    #    subh_cnts[[scnt]]$sig   <- read_raw(subh_cnt$raw, base, 4)
-    #    subh_cnts[[scnt]]$page1 <- read_int(subh_cnt$raw, base + 4, 4)
-    #    subh_cnts[[scnt]]$loc1  <- read_int(subh_cnt$raw, base + 8, 4)
-    #    subh_cnts[[scnt]]$pagel <- read_int(subh_cnt$raw, base + 12, 4)
-    #    subh_cnts[[scnt]]$locl  <- read_int(subh_cnt$raw, base + 16, 4)
-    #}
 
     # Parse row size subheader
     row_size <- get_subhs(subhs, SUBH_ROWSIZE)
@@ -353,6 +341,10 @@ read.sas7bdat <- function(file) {
     if(length(col_text) < 1)
         stop(paste("no column text subheaders found", BUGREPORT))
 
+    # Test for COMPRESS=CHAR compression
+    if("SASYZCRL" == read_str(col_text[[1]]$raw, 16, 8))
+        stop(paste("file uses unsupported CHAR compression"))
+
     col_attr <- get_subhs(subhs, SUBH_COLATTR)            
     if(length(col_attr) < 1)
         stop(paste("no column attribute subheaders found", BUGREPORT))
@@ -382,6 +374,37 @@ read.sas7bdat <- function(file) {
     col_info <- list()
     for(i in 1:col_count)
         col_info[[i]] <- c(col_name[[i]], col_attr[[i]], col_labs[[i]]) 
+
+    # Check pages for known type 
+    for(page_num in 1:page_count)
+        if(!(pages[[page_num]]$type %in% PAGE_ANY))
+            stop(paste("page", page_num, "has unknown type:",
+                pages[[page_num]]$type, BUGREPORT))
+
+    # Parse subheaders
+
+    # Parse subheader count subheader
+    # At present, the data stored in this subheader is not
+    # necessary, but might be used in the future for verification.
+    # The column attribute, text, name, and list subheaders are 
+    # known to occur multiple times.
+
+    #subh_cnt <- get_subhs(subhs, SUBH_SUBHCNT)
+    #if(length(subh_cnt) != 1)
+    #    stop(paste("found", length(subh_cnt),
+    #        "subheader count subheaders where 1 expected", BUGREPORT))
+    #subh_cnt <- subh_cnt[[1]]
+    #subh_cnts <- list()
+    #for(scnt in 1:11) {
+    #    base <- 84 + (scnt - 1) * 20
+    #    subh_cnts[[scnt]]       <- list()
+    #    subh_cnts[[scnt]]$sig   <- read_raw(subh_cnt$raw, base, 4)
+    #    subh_cnts[[scnt]]$page1 <- read_int(subh_cnt$raw, base + 4, 4)
+    #    subh_cnts[[scnt]]$loc1  <- read_int(subh_cnt$raw, base + 8, 4)
+    #    subh_cnts[[scnt]]$pagel <- read_int(subh_cnt$raw, base + 12, 4)
+    #    subh_cnts[[scnt]]$locl  <- read_int(subh_cnt$raw, base + 16, 4)
+    #}
+
 
     # Parse data
     data  <- list()
