@@ -126,11 +126,11 @@ SAS7BDAT files consist of binary encoded data. Data files encoded in this format
 
 There appear to be significant differences in the SAS7BDAT format across operating systems and computer hardware platforms (32bit vs. 64bit). See the section on \hyperref[platform-differences]{platform differences} for more details. The format described below applies to the majority of the collection of test files referenced in \texttt{data/sas7bdat.sources.RData} directory (i.e. files associated with 32bit and some 64bit builds of SAS for Microsoft Windows).
 
-The figure below illustrates the overall structure of the SAS7BDAT database. Each file consists of a 1024 byte header, followed by PC pages, each of length PS bytes (PC and PS are shorthand for 'page count' and 'page size' respectively, and are used to denote these quantities throughout this document).:
+The figure below illustrates the overall structure of the SAS7BDAT database. Each file consists of a header (length := LH), followed by PC pages, each of length PS bytes (PC and PS are shorthand for 'page count' and 'page size' respectively, and are used to denote these quantities throughout this document).:
 %
 \begin{quote}{\ttfamily \raggedright \noindent
 -{}-{}-{}-{}-{}-{}-{}-{}-{}-\\
-|~~1024~~|~~header\\
+|~~~LH~~~|~~header\\
 -{}-{}-{}-{}-{}-{}-{}-{}-{}-\\
 |~~~PS~~~|~~page~1\\
 -{}-{}-{}-{}-{}-{}-{}-{}-{}-\\
@@ -152,7 +152,7 @@ The figure below illustrates the overall structure of the SAS7BDAT database. Eac
   \label{sas7bdat-header}%
 }
 
-The SAS7BDAT file header contains a binary file identifier (\emph{i.e.}, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. Most files encountered encode multi-byte values little-endian (least significant byte first). However, at least one file (written 3/12/1986) has big-endian values. Hence, it appears that multi-byte values are encoded using endianness of the platform where the file was written.
+The SAS7BDAT file header contains a binary file identifier (\emph{i.e.}, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. Most files encountered encode multi-byte values little-endian (least significant byte first). However, at least one file has big-endian values. Hence, it appears that multi-byte values are encoded using endianness of the platform where the file was written.
 
 The \emph{offset table} below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. Byte lengths having the form '\%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'uint, page size := PS' indicates that the data stored at the corresponding location is a little-endian unsigned integer representing the page size, which we denote PS. The description \emph{????????????} indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
 
@@ -208,6 +208,16 @@ binary, \hyperref[magic-number]{magic number}
 
 32
  & 
+1
+ & 
+medium
+ & 
+binary, \hyperref[alignment]{Alignment} := a1 (x33-4 else-0)
+ \\
+\hline
+
+32
+ & 
 3
  & 
 low
@@ -218,11 +228,21 @@ low
 
 35
  & 
-2
+1
+ & 
+medium
+ & 
+binary, \hyperref[alignment]{Alignment} := a2 (x33-4 else-0)
+ \\
+\hline
+
+36
+ & 
+1
  & 
 low
  & 
-bitmasks? \hyperref[alignment]{Alignment} := a (x3222-4 x3333-8)
+\emph{????????????}
  \\
 \hline
 
@@ -232,7 +252,7 @@ bitmasks? \hyperref[alignment]{Alignment} := a (x3222-4 x3333-8)
  & 
 low
  & 
-endianness (x01-little x00-big)
+int, endianness (x01-little x00-big)
  \\
 \hline
 
@@ -318,7 +338,7 @@ ascii, dataset name
 
 156
  & 
-8
+8+a1
  & 
 medium
  & 
@@ -326,7 +346,7 @@ ascii, file type
  \\
 \hline
 
-164+164\%a
+164+a1
  & 
 16
  & 
@@ -336,7 +356,7 @@ high
  \\
 \hline
 
-180+164\%a
+180+a1
  & 
 16
  & 
@@ -346,17 +366,17 @@ low
  \\
 \hline
 
-196+164\%a
+196+a2
  & 
-20
+4
  & 
-low
+high
  & 
-\emph{????????????}
+int, length of SAS7BDAT header := LH
  \\
 \hline
 
-200+164\%a
+200+a2
  & 
 4
  & 
@@ -366,7 +386,7 @@ int, page size := PS
  \\
 \hline
 
-204+164\%a
+204+a2
  & 
 4
  & 
@@ -376,7 +396,7 @@ int, page count := PC
  \\
 \hline
 
-208+164\%a
+208+a1+a2
  & 
 8
  & 
@@ -386,7 +406,7 @@ low
  \\
 \hline
 
-216+164\%a
+216+a1+a2
  & 
 8
  & 
@@ -396,27 +416,47 @@ ascii, release
  \\
 \hline
 
-224+164\%a
+224+a1+a2
  & 
-8
+16
  & 
-medium
+high
  & 
-ascii, host (may be larger than 8 bytes)
+ascii, host
  \\
 \hline
 
-232+164\%a
+240+a1+a2
  & 
-56
+16
  & 
-low
+high
  & 
-\emph{????????????}
+ascii, version
  \\
 \hline
 
-288+164\%a
+256+a1+a2
+ & 
+16
+ & 
+high
+ & 
+ascii, OS maker
+ \\
+\hline
+
+272+a1+a2
+ & 
+16
+ & 
+high
+ & 
+ascii, OS name
+ \\
+\hline
+
+288+a1+a2
  & 
 48
  & 
@@ -426,9 +466,9 @@ string with timestamps, license?
  \\
 \hline
 
-336
+336+a1+a2
  & 
-\%1024
+\%LH
  & 
 medium
  & 
@@ -642,7 +682,7 @@ binary
   \label{alignment}%
 }
 
-In files generated by 64 bit builds of SAS, 'Align' means that the offset of this data field should be advanced so that the offset is a factor of 8 bytes. For files generated by 32 bit builds of SAS, the alignment is 4 bytes. Because \hyperref[sas7bdat-packed-binary-data]{SAS7BDAT Packed Binary Data} potentially consist of doubles, it seems that all data rows are 64 bit aligned, regardless of whether the file was written with a 32 bit or 64 bit build of SAS. Alignment of data structures according to the platform word length (4 bytes for 32 bit, and 8 bytes for 64 bit architectures) facilitates efficient operations on data stored in memory. It also suggests that parts of SAS7BDAT data file format are platform dependent. One theory is that the SAS implementation utilizes a common C or C++ structure or class to reference data stored in memory. When compiled, these structures are aligned according to the word length of the target platform. Of course, when SAS was originally written, platform differences may not have been forseeable. Hence, these inconsistencies may not have been intentional.
+In files generated by 64 bit builds of SAS, 'alignment' means that all data field offsets should be a factor of 8 bytes. For files generated by 32 bit builds of SAS, the alignment is 4 bytes. Because \hyperref[sas7bdat-packed-binary-data]{SAS7BDAT Packed Binary Data} potentially consist of doubles, it seems that all data rows are 64 bit aligned, regardless of whether the file was written with a 32 bit or 64 bit build of SAS. Alignment of data structures according to the platform word length (4 bytes for 32 bit, and 8 bytes for 64 bit architectures) facilitates efficient operations on data stored in memory. It also suggests that parts of SAS7BDAT data file format are platform dependent. One theory is that the SAS implementation utilizes a common C or C++ structure or class to reference data stored in memory. When compiled, these structures are aligned according to the word length of the target platform. Of course, when SAS was originally written, platform differences may not have been forseeable. Hence, these inconsistencies may not have been intentional.
 
 
 %___________________________________________________________________________
@@ -662,6 +702,18 @@ b3~14~11~cf~~~bd~92~08~00\\
 09~c7~31~8c~~~18~1f~10~11
 }
 \end{quote}
+
+In all test files except one, the magic number above holds. The one anomalous file has the following magic number:
+%
+\begin{quote}{\ttfamily \raggedright \noindent
+00~00~00~00~~~00~00~00~00\\
+00~00~00~00~~~00~00~00~00\\
+00~00~00~00~~~00~00~00~00\\
+00~00~00~00~~~18~1f~10~11
+}
+\end{quote}
+
+In addition, the file is associated with the SAS release ``3.2TK''. Indeed, this file may not have been written by SAS. Otherwise, the anomalous appears to be similar to other test files.
 
 
 %___________________________________________________________________________

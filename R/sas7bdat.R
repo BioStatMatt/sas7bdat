@@ -69,15 +69,34 @@ generate.sas7bdat.source <- function(fn, url) {
     cat("done\nparsing file...")
     dat <- try(read.sas7bdat(fn))
     cat("done\n")
-    if(inherits(dat, "try-error")) {
-      dat <- dat[1]
+    if(!inherits(dat, "try-error")) {
+        as.character(attr(dat, 'timestamp')) -> timestamp
+        attr(dat, 'SAS.release') -> SAS_release
+        attr(dat, 'SAS.host')    -> SAS_host
+        attr(dat, 'OS.version')  -> OS_version
+        attr(dat, 'OS.maker')    -> OS_maker
+        attr(dat, 'OS.name')     -> OS_name
+        attr(dat, 'endianess')   -> endianess
+        attr(dat, 'winunix')     -> winunix
+        dat <- "OK"
     } else {
-      dat <- "OK"
+        timestamp   <- ""
+        SAS_release <- ""
+        SAS_host    <- ""
+        OS_version  <- ""
+        OS_maker    <- ""
+        OS_name     <- ""
+        endianess   <- ""
+        winunix     <- ""
+        dat <- dat[1]
     }
     data.frame(
-        filename = fn, date = Sys.time(), uncompressed = sz,
+        filename = fn, accessed = Sys.time(), uncompressed = sz,
         gzip = sz.gz, bzip2 = sz.bz2, xz = sz.xz, url = url,
-        version = VERSION, message = dat, stringsAsFactors=FALSE)
+        PKGversion = VERSION, message = dat, timestamp = timestamp,
+        SASrelease = SAS_release, SAShost = SAS_host, OSversion = OS_version,
+        OSmaker = OS_maker, OSname = OS_name, endianess = endianess,
+        winunix = winunix, stringsAsFactors=FALSE)
 }
 
 update.sas7bdat.source <- function(df) {
@@ -104,7 +123,7 @@ KNOWNHOST <- c("WIN_PRO", "WIN_NT", "WIN_NTSV", "WIN_SRV",
                "NET_DSRV", "NET_SRV", "WIN_98", "W32_VSPR",
                "WIN", "WIN_95", "X64_VSPR", "X64_ESRV",
                "W32_ESRV", "W32_7PRO", "W32_VSHO", "X64_7HOM",
-               "X64_7PRO", "X64_SRV0", "W32_SRV0")
+               "X64_7PRO", "X64_SRV0", "W32_SRV0", "Linux")
 
 # Subheader 'signatures'
 SUBH_ROWSIZE <- as.raw(c(0xF7,0xF7,0xF7,0xF7))
@@ -203,11 +222,6 @@ read_column_attributes <- function(col_attr) {
     return(info)
 }
 
-# Alignment
-ALIGN_64     <- as.raw(c(0x33,0x33))
-ALIGN_32     <- as.raw(c(0x32,0x22))
-
-
 # Magic number
 MAGIC     <- as.raw(c(0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
                       0x0, 0x0, 0x0, 0x0, 0xc2,0xea,0x81,0x60,
@@ -259,42 +273,77 @@ read.sas7bdat <- function(file) {
         stop("invalid 'file' argument")
     }
 
+    
     # Check magic number
-    header <- readBin(con, "raw", 1024, 1)
-    if(length(header) < 1024)
+    header <- readBin(con, "raw", 288, 1)
+    if(length(header) < 288)
         stop("header too short (not a sas7bdat file?)")
     if(!check_magic_number(header))
         stop(paste("magic number mismatch", BUGREPORT))
 
     # Check for 32 or 64 bit alignment
-    align <- read_raw(header, 35, 2)
-    if(identical(align, ALIGN_32)) {
-        halign <- 0 
-    } else if(identical(align, ALIGN_64)) {
-        halign <- 4 
+    align1 <- read_raw(header, 32, 1)
+    if(identical(align1, as.raw(0x33))) {
+        align1 <- 4
     } else {
-        stop(paste("unrecognized alignment code",
-            paste(align, collapse=''), BUGREPORT))
+        align1 <- 0
     }
-    
+
+    align2 <- read_raw(header, 35, 1)
+    if(identical(align2, as.raw(0x33))) {
+        align2 <- 4
+    } else {
+        align2 <- 0
+    }
+
+    endianess <- read_raw(header, 37, 1)
+    if(identical(endianess, as.raw(0x01))) {
+        endianess <- "little"
+    } else {
+        endianess <- "big"
+        stop("big endian files are not supported")
+    }
+
+    winunix <- read_str(header, 39, 1)
+    if(identical(winunix, "1")) {
+        winunix <- "unix"
+    } else if(identical(winunix, "2")) {
+        winunix <- "windows"
+    } else {
+        winunix <- "unknown"
+    }   
+
     # Timestamp is epoch 01/01/1960
-    timestamp <- read_flo(header,164 + halign,8)
+    timestamp <- read_flo(header, 164+align1, 8)
     timestamp <- chron(timestamp, origin.=c(month=1, day=1, year=1960)) 
+    
+    # Read the remaining header
+    header_length <- read_int(header, 196+align2, 4)
+    header <- c(header, readBin(con, "raw", header_length-288, 1))
+    if(length(header) < header_length)
+        stop("header too short (not a sas7bdat file?)")
 
 
-    page_size   <- read_int(header, 200 + halign, 4)
+
+    page_size   <- read_int(header, 200 + align2, 4)
     if(page_size < 0)
         stop(paste("page size is negative", BUGREPORT))
 
-    page_count  <- read_int(header, 204 + halign, 4)
+    page_count  <- read_int(header, 204 + align2, 4)
     if(page_count < 1)
         stop(paste("page count is not positive", BUGREPORT))
     
 
-    SAS_release <- read_str(header, 216 + halign, 8)
-    SAS_host    <- read_str(header, 224 + halign, 8)
+    SAS_release <- read_str(header, 216 + align1 + align2, 8)
+
+    # SAS_host is a 16 byte field, but only the first eight are used
+    SAS_host    <- read_str(header, 224 + align1 + align2, 8)
     if(!(SAS_host %in% KNOWNHOST))
         stop(paste("unknown host", SAS_host, BUGREPORT))
+
+    OS_version  <- read_str(header, 240 + align1 + align2, 16) 
+    OS_maker    <- read_str(header, 256 + align1 + align2, 16) 
+    OS_name     <- read_str(header, 272 + align1 + align2, 16) 
 
     # Read pages
     pages <- list()
@@ -459,5 +508,10 @@ read.sas7bdat <- function(file) {
     attr(data, 'timestamp')   <- timestamp
     attr(data, 'SAS.release') <- SAS_release
     attr(data, 'SAS.host')    <- SAS_host
+    attr(data, 'OS.version')  <- OS_version
+    attr(data, 'OS.maker')    <- OS_maker
+    attr(data, 'OS.name')     <- OS_name
+    attr(data, 'endianess')   <- endianess
+    attr(data, 'winunix')     <- winunix
     return(data)
 }
