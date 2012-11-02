@@ -29,7 +29,7 @@ When the database specifies a field format and/or label, the following may also 
 http://biostatmatt.com/archives/tag/sas7bdat
 }
 \author{
-Matthew S. Shotwell
+Matt Shotwell
 }
 
 \examples{
