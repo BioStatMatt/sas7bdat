@@ -9,15 +9,24 @@ These data are a collection of internet resources for SAS database files in the 
 }
 \usage{data(sas7bdat.sources)}
 \format{
-  A data frame with 290 observations on the following 7 variables.
+  A data frame with records on the following fields:
   \describe{
-    \item{\code{filename}}{a character vector, the SAS database filename}
-    \item{\code{date}}{a POSIXct, the date last retrieved}
-    \item{\code{uncompressed}}{a numeric vector, file size (bytes)}
-    \item{\code{gzip}}{a numeric vector, gzip compressed file size (bytes)}
-    \item{\code{bzip2}}{a numeric vector, bzip2 compressed file size (bytes)}
-    \item{\code{xz}}{a numeric vector, xz compressed file size (bytes)}
-    \item{\code{url}}{a character vector, the Universal Resource Locator}
+    \item{\code{filename}}{character, the SAS database filename}
+    \item{\code{accessed}}{POSIXct, the date last retrieved}
+    \item{\code{uncompressed}}{numeric, file size (bytes)}
+    \item{\code{gzip}}{numeric, gzip compressed file size (bytes)}
+    \item{\code{bzip2}}{numeric, bzip2 compressed file size (bytes)}
+    \item{\code{xz}}{numeric, xz compressed file size (bytes)}
+    \item{\code{url}}{character, the Universal Resource Locator}
+    \item{\code{PKGversion}}{character, the \pkg{sas7bdat} package version}
+    \item{\code{message}}{character, message returned by \code{read.sas7bdat} (if any)}
+    \item{\code{SASrelease}}{character, SAS release}
+    \item{\code{SAShost}}{character, SAS host platform}
+    \item{\code{OSversion}}{character, OS version}
+    \item{\code{OSmaker}}{character, OS maker}
+    \item{\code{OSname}}{character, OS name}
+    \item{\code{endianness}}{character, endianness of header fields}
+    \item{\code{winunix}}{character, platform type}
   }
 }
 \examples{

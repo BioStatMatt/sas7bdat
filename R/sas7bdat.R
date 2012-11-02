@@ -17,9 +17,7 @@
 # Download all files listed in sas7bdat.sources
 # path - where to save files
 # max.size - limit on the size of downloaded files (bytes)
-download.sas7bdat.sources <- function(path=normalizePath("."), max.size=2^20) {
-    data(sas7bdat.sources)
-    ss <- sas7bdat.sources
+download.sas7bdat.sources <- function(ss, path=normalizePath("."), max.size=2^20) {
     # don't download zip files or files larger than max.size
     ss <- subset(ss, !grepl(".zip$", ss$url) & ss$uncompressed < max.size)
     if(!file.exists(path))
@@ -108,7 +106,7 @@ update.sas7bdat.source <- function(df) {
 
 # Update sas7bdat.sources
 update.sas7bdat.sources <- function(ss) {
-    for(i in 1:nrow(sas7bdat.sources))
+    for(i in 1:nrow(ss))
         ss[i,] <- update.sas7bdat.source(ss[i,])
     return(ss)
 }
