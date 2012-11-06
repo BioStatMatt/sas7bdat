@@ -79,7 +79,8 @@ offset		length	conf.	description
 84		8	high	ascii 'SAS FILE'
 92		64	high	ascii, dataset name
 156		8+a1	medium	ascii, file type
-164+a1		16	high	2x double, timestamp, secs since 1/1/60
+164+a1		8	high	double, date created, secs since 1/1/60
+172+a1		8	high	double, date modified, secs since 1/1/60
 180+a1		16	low	*????????????*
 196+a2		4	high	int, length of SAS7BDAT header := LH
 200+a2		4	high	int, page size := PS

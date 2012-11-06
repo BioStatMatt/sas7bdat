@@ -350,11 +350,21 @@ ascii, file type
 
 164+a1
  & 
-16
+8
  & 
 high
  & 
-2x double, timestamp, secs since 1/1/60
+double, date created, secs since 1/1/60
+ \\
+\hline
+
+172+a1
+ & 
+8
+ & 
+high
+ & 
+double, date modified, secs since 1/1/60
  \\
 \hline
 

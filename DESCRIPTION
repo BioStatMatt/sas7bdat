@@ -6,6 +6,6 @@ Date: 2012-11-02
 Author: Matt Shotwell
 Maintainer: Matt Shotwell <matt.shotwell@vanderbilt.edu>
 Description: Read SAS files in the sas7bdat data format.
-Depends: R (>= 2.10), chron
+Depends: R (>= 2.10)
 License: GPL (>= 2)
 LazyLoad: yes

@@ -68,7 +68,9 @@ generate.sas7bdat.source <- function(fn, url) {
     dat <- try(read.sas7bdat(fn))
     cat("done\n")
     if(!inherits(dat, "try-error")) {
-        as.character(attr(dat, 'timestamp')) -> timestamp
+        # the two date variables below are not used 
+        as.character(attr(dat, 'date.created')) -> datecreated 
+        as.character(attr(dat, 'date.modified')) -> datemodified
         attr(dat, 'SAS.release') -> SAS_release
         attr(dat, 'SAS.host')    -> SAS_host
         attr(dat, 'OS.version')  -> OS_version
@@ -78,23 +80,24 @@ generate.sas7bdat.source <- function(fn, url) {
         attr(dat, 'winunix')     -> winunix
         dat <- "OK"
     } else {
-        timestamp   <- ""
-        SAS_release <- ""
-        SAS_host    <- ""
-        OS_version  <- ""
-        OS_maker    <- ""
-        OS_name     <- ""
-        endianess   <- ""
-        winunix     <- ""
+        datecreated  <- ""
+        datemodified <- ""
+        SAS_release  <- ""
+        SAS_host     <- ""
+        OS_version   <- ""
+        OS_maker     <- ""
+        OS_name      <- ""
+        endianess    <- ""
+        winunix      <- ""
         dat <- dat[1]
     }
     data.frame(
         filename = fn, accessed = Sys.time(), uncompressed = sz,
         gzip = sz.gz, bzip2 = sz.bz2, xz = sz.xz, url = url,
-        PKGversion = VERSION, message = dat, timestamp = timestamp,
-        SASrelease = SAS_release, SAShost = SAS_host, OSversion = OS_version,
-        OSmaker = OS_maker, OSname = OS_name, endianess = endianess,
-        winunix = winunix, stringsAsFactors=FALSE)
+        PKGversion = VERSION, message = dat, SASrelease = SAS_release,
+        SAShost = SAS_host, OSversion = OS_version, OSmaker = OS_maker,
+        OSname = OS_name, endianess = endianess, winunix = winunix,
+        stringsAsFactors=FALSE)
 }
 
 update.sas7bdat.source <- function(df) {
@@ -261,7 +264,6 @@ splice_col_attr_subheaders <- function(col_attr) {
 }
 
 read.sas7bdat <- function(file) {
-    require('chron')
     if(inherits(file, "connection") && isOpen(file, "read")) {
         con <- file
         close_con <- FALSE
@@ -313,8 +315,10 @@ read.sas7bdat <- function(file) {
     }   
 
     # Timestamp is epoch 01/01/1960
-    timestamp <- read_flo(header, 164+align1, 8)
-    timestamp <- chron(timestamp, origin.=c(month=1, day=1, year=1960)) 
+    datecreated <- read_flo(header, 164+align1, 8)
+    datecreated <- datecreated + as.POSIXct("1960/01/01", format="%Y/%m/%d")
+    datemodified <- read_flo(header, 172+align1, 8)
+    datemodified <- datemodified + as.POSIXct("1960/01/01", format="%Y/%m/%d")
     
     # Read the remaining header
     header_length <- read_int(header, 196+align2, 4)
@@ -503,14 +507,15 @@ read.sas7bdat <- function(file) {
         close(con)
 
     data <- as.data.frame(data)
-    attr(data, 'column.info') <- col_info
-    attr(data, 'timestamp')   <- timestamp
-    attr(data, 'SAS.release') <- SAS_release
-    attr(data, 'SAS.host')    <- SAS_host
-    attr(data, 'OS.version')  <- OS_version
-    attr(data, 'OS.maker')    <- OS_maker
-    attr(data, 'OS.name')     <- OS_name
-    attr(data, 'endianess')   <- endianess
-    attr(data, 'winunix')     <- winunix
+    attr(data, 'column.info')   <- col_info
+    attr(data, 'date.created')  <- datecreated
+    attr(data, 'date.modified') <- datemodified
+    attr(data, 'SAS.release')   <- SAS_release
+    attr(data, 'SAS.host')      <- SAS_host
+    attr(data, 'OS.version')    <- OS_version
+    attr(data, 'OS.maker')      <- OS_maker
+    attr(data, 'OS.name')       <- OS_name
+    attr(data, 'endianess')     <- endianess
+    attr(data, 'winunix')       <- winunix
     return(data)
 }
