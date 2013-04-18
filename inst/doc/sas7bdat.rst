@@ -40,9 +40,9 @@ The information below was deduced by examining the contents of many SAS7BDAT dat
 
 SAS7BDAT files consist of binary encoded data. Data files encoded in this format often have the extension '.sas7bdat'. The name 'SAS7BDAT' is not official, but is used throughout this document to refer to SAS database files formatted according to the descriptions below.
 
-There are significant differences in the SAS7BDAT format across operating systems and computer hardware platforms (32bit vs. 64bit). See the section on `platform differences`_ for more details. The format described below is sufficient to read all the entire collection of test files referenced in ``data/sas7bdat.sources.RData`` directory (i.e. files associated with 32bit and some 64bit builds of SAS for Microsoft Windows, and **u64** SAS versions).  This includes files created with COMPRESS=CHAR.  The format described here is probably not sufficient to **write** SAS7BDAT format files, due to the many unknown fields.
+There are significant differences in the SAS7BDAT format depending on the operating systems and computer hardware platforms (32bit vs. 64bit). See the section on `platform differences`_ for more details. The format described below is sufficient to read the entire collection of test files referenced in ``data/sas7bdat.sources.RData`` (i.e. files associated with 32bit and some 64bit builds of SAS for Microsoft Windows, and **u64** SAS versions).  This includes files created with COMPRESS=CHAR. The format described here is probably not sufficient to **write** SAS7BDAT format files, due to lingering uncertainties.
 
-The figure below illustrates the overall structure of the SAS7BDAT database. Each file consists of a header (length := LH), followed by PC pages, each of length PS bytes (PC and PS are shorthand for 'page count' and 'page size' respectively, and are used to denote these quantities throughout this document).::
+The figure below illustrates the overall structure of the SAS7BDAT database. Each file consists of a header (length := LH bytes), followed by PC pages, each of length PS bytes (PC and PS are shorthand for 'page count' and 'page size' respectively, and are used to denote these quantities throughout this document).::
 
   ----------
   |   LH   |  header 
@@ -56,12 +56,14 @@ The figure below illustrates the overall structure of the SAS7BDAT database. Eac
   |   PS   |  page PC
   ----------
 
+Throughout this document, hexadecimal digits are denoted with a preceding 'x', binary digits with a preceding 'b', and decimal digits with no preceding character. For example, see the below `table of hexadecimal, decimal, and binary values`_.
+
 SAS7BDAT Header
 ===============
 
 The SAS7BDAT file header contains a binary file identifier (*i.e.*, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. Most files encountered encode multi-byte values little-endian (least significant byte first). However, some files have big-endian values. Hence, it appears that multi-byte values are encoded using endianness of the platform where the file was written.  See `Platform Differences`_ for a table of key test files which differ in several ways.
 
-The *offset table* below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. Byte lengths having the form '%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'int, page size := PS' indicates that the data stored at the corresponding location is an integer representing the page size, which we denote PS. The description *????????????* indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
+The *offset table* below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. For example, the field at offset 0 has length 32 bytes. Hence, bytes 0,1,...,31 comprise the data for this field. Byte lengths having the form '%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'int, page size := PS' indicates that the data stored at the corresponding location is a signed integer representing the page size, which we denote PS. The description *????????????* indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
 
 Header Offset Table
 -------------------
@@ -70,7 +72,7 @@ Header Offset Table
 offset		length	conf.	description
 ==============  ======  ======  ===============================================
 0		32	high	binary, `magic number`_ 
-32		1	high	binary, Alignment_  if (byte==x33) a2=4 else a2=0 .  **u64** is true if a2=4 (unix 64 bit format).
+32		1	high	binary, Alignment_: if (byte==x33) a2=4 else a2=0 .  **u64** is true if a2=4 (unix 64 bit format).
 33		2	low	*????????????*
 35		1	high	binary, Alignment_  if (byte==x33) a1=4 else a1=0
 36		1	low	*????????????*
@@ -109,71 +111,73 @@ The 8 bytes beginning at offset 32 hold information which affects the offset of 
 
 1. The byte at offset 32 defines the **u64** (unix 64 bit) file format, which affects many field and header lengths (usually via 4 vs. 8 byte integers).
 2. The byte at offset 35 controls an offset before the timestamps.
-3. The byte at offset 37 defines byte ordering of ints and doubles (most test files were created on Windows and use Intel byte ordering).
+3. The byte at offset 37 defines byte ordering of ints and doubles (most test files were created on Windows and use Intel byte ordering; little endian).
 4. The byte at offset 39 appears to distinguish the OS type, where '1' indicates that the file was generated on a UNIX-like system, such as Linux or SunOS, and '2' indicates the file was generated on a Microsoft Windows platform. However, this does not affect any important fields in the file format.
 
-The following table describes some of the possible polymorphisms, where the first column contains the hex values for bytes 32-39, the second column shows bytes 216-239 ('.' represents a non-ASCII character or '\0').
+The following table describes some of the possible polymorphisms for the 8 bytes at offset 32. The first field lists the name of the file where the sequence was found (see ``data/sas7bdat.sources.RData``), the second lists the eight byte values (hexadecimal), the third field shows bytes 216-239 in ASCII ('.' represents a non-ASCII character or '\0'), and the fourth field lists the SAS7BDAT sub-format.
 
-=========================== =========================== ============================ ======================
-filename                    bytes 32-39                 bytes 216-239                format
-=========================== =========================== ============================ ======================
-``compress_no.sas7bdat``    ``22 22 00 32 22 01 02 32`` ``9.0101M3NET_ASRV........`` Windows Intel
-``compress_yes.sas7bdat``   ``22 22 00 32 22 01 02 32`` ``9.0101M3NET_ASRV........`` Windows Intel
-``lowbwt_i386.sas7bdat``    ``22 22 00 32 22 01 02 32`` ``9.0202M0W32_VSPRO.......`` Windows Intel
-``missing_values.sas7bdat`` ``22 22 00 32 22 01 02 32`` ``9.0202M0W32_VSPRO.......`` Windows Intel
-``obs_all_perf_1.sas7bdat`` ``22 22 00 32 22 01 02 32`` ``9.0101M3XP_PRO..........`` Windows Intel
-``adsl.sas7bdat``           ``22 22 00 33 33 01 02 32`` ``....9.0202M3X64_ESRV....`` Windows x64 Intel
-``eyecarex.sas7bdat``       ``22 22 00 33 22 00 02 31`` ``....9.0000M0WIN.........`` Unix non-Intel
-``lowbwt_x64.sas7bdat``     ``22 22 00 33 33 01 02 32`` ``....9.0202M2X64_VSPRO...`` Windows x64 Intel
-``natlterr1994.sas7bdat``   ``33 22 00 33 33 00 02 31`` ``........9.0101M3SunOS...`` u64 Unix non-Intel
-``natlterr2006.sas7bdat``   ``33 22 00 33 33 00 02 31`` ``........9.0101M3SunOS...`` u64 Unix non-Intel
-``txzips.sas7bdat``         ``33 22 00 33 33 01 02 31`` ``........9.0201M0Linux...`` u64 Unix Intel
-=========================== =========================== ============================ ======================
+=========================== =================================== ============================ ======================
+filename                    bytes 32-39                         bytes 216-239                format
+=========================== =================================== ============================ ======================
+``compress_no.sas7bdat``    ``x22 x22 x00 x32 x22 x01 x02 x32`` ``9.0101M3NET_ASRV........`` Windows Intel
+``compress_yes.sas7bdat``   ``x22 x22 x00 x32 x22 x01 x02 x32`` ``9.0101M3NET_ASRV........`` Windows Intel
+``lowbwt_i386.sas7bdat``    ``x22 x22 x00 x32 x22 x01 x02 x32`` ``9.0202M0W32_VSPRO.......`` Windows Intel
+``missing_values.sas7bdat`` ``x22 x22 x00 x32 x22 x01 x02 x32`` ``9.0202M0W32_VSPRO.......`` Windows Intel
+``obs_all_perf_1.sas7bdat`` ``x22 x22 x00 x32 x22 x01 x02 x32`` ``9.0101M3XP_PRO..........`` Windows Intel
+``adsl.sas7bdat``           ``x22 x22 x00 x33 x33 x01 x02 x32`` ``....9.0202M3X64_ESRV....`` Windows x64 Intel
+``eyecarex.sas7bdat``       ``x22 x22 x00 x33 x22 x00 x02 x31`` ``....9.0000M0WIN.........`` Unix non-Intel
+``lowbwt_x64.sas7bdat``     ``x22 x22 x00 x33 x33 x01 x02 x32`` ``....9.0202M2X64_VSPRO...`` Windows x64 Intel
+``natlterr1994.sas7bdat``   ``x33 x22 x00 x33 x33 x00 x02 x31`` ``........9.0101M3SunOS...`` u64 Unix non-Intel
+``natlterr2006.sas7bdat``   ``x33 x22 x00 x33 x33 x00 x02 x31`` ``........9.0101M3SunOS...`` u64 Unix non-Intel
+``txzips.sas7bdat``         ``x33 x22 x00 x33 x33 x01 x02 x31`` ``........9.0201M0Linux...`` u64 Unix Intel
+=========================== =================================== ============================ ======================
+
+.. _`table of hexadecimal, decimal, and binary values`:
 
 The binary representation for the hexadecimal values present in the table above are given below.
 
-===========  =======  ============
+===========  =======  =============
 hexadecimal  decimal  binary
-===========  =======  ============
-``01``       ``001``  ``00000001``
-``02``       ``002``  ``00000010``
-``22``       ``034``  ``00010010``
-``31``       ``049``  ``00011001``
-``32``       ``050``  ``00011010``
-``33``       ``051``  ``00011011``
-===========  =======  ============
+===========  =======  =============
+``x01``      ``001``  ``b00000001``
+``x02``      ``002``  ``b00000010``
+``x22``      ``034``  ``b00010010``
+``x31``      ``049``  ``b00011001``
+``x32``      ``050``  ``b00011010``
+``x33``      ``051``  ``b00011011``
+===========  =======  =============
 
 Alignment
 +++++++++
 
-In files generated by 64 bit builds of SAS, 'alignment' means that all data field offsets containing doubles or 8 byte ints should be a factor of 8 bytes. For files generated by 32 bit builds of SAS, the alignment is 4 bytes. Because `SAS7BDAT Packed Binary Data`_ potentially consist of doubles, it seems that all data rows are 64 bit aligned, regardless of whether the file was written with a 32 bit or 64 bit build of SAS. Alignment of data structures according to the platform word length (4 bytes for 32 bit, and 8 bytes for 64 bit architectures) facilitates efficient operations on data stored in memory. It also suggests that parts of SAS7BDAT data file format are platform dependent. One theory is that the SAS implementation utilizes a common C or C++ structure or class to reference data stored in memory. When compiled, these structures are aligned according to the word length of the target platform. Of course, when SAS was originally written, platform differences may not have been forseeable. Hence, these inconsistencies may not have been intentional.
+In files generated by 64 bit builds of SAS, 'alignment' means that all data field offsets containing doubles or 8 byte ints should be a factor of 8 bytes. For files generated by 32 bit builds of SAS, the alignment is 4 bytes. Because `SAS7BDAT Packed Binary Data`_ may contain double precision values, it appears that all data rows are 64 bit aligned, regardless of whether the file was written with a 32 bit or 64 bit build of SAS. Alignment of data structures according to the platform word length (4 bytes for 32 bit, and 8 bytes for 64 bit architectures) facilitates efficient operations on data stored in memory. It also suggests that parts of SAS7BDAT data file format are platform dependent. One theory is that the SAS implementation utilizes a common C or C++ structure or class to reference data stored in memory. When compiled, these structures are aligned according to the word length of the target platform. Of course, when SAS was originally written, platform differences may not have been forseeable. Hence, these inconsistencies may not have been intentional.
 
 Magic Number
 ++++++++++++
 
 The SAS7BDAT magic number is the following 32 byte (hex) sequence.::
 
-   00 00 00 00   00 00 00 00
-   00 00 00 00   c2 ea 81 60
-   b3 14 11 cf   bd 92 08 00
-   09 c7 31 8c   18 1f 10 11
+   x00 x00 x00 x00   x00 x00 x00 x00
+   x00 x00 x00 x00   xc2 xea x81 x60
+   xb3 x14 x11 xcf   xbd x92 x08 x00
+   x09 xc7 x31 x8c   x18 x1f x10 x11
 
-In all test files except one, the magic number above holds. The one anomalous file has the following magic number::
+In all test files except one (not listed in ``data/sas7bdat.sources.RData``), the magic number above holds. The one anomalous file has the following magic number::
 
-   00 00 00 00   00 00 00 00
-   00 00 00 00   00 00 00 00 
-   00 00 00 00   00 00 00 00 
-   00 00 00 00   18 1f 10 11
+   x00 x00 x00 x00   x00 x00 x00 x00
+   x00 x00 x00 x00   x00 x00 x00 x00 
+   x00 x00 x00 x00   x00 x00 x00 x00 
+   x00 x00 x00 x00   x18 x1f x10 x11
 
-In addition, the file is associated with the SAS release "3.2TK". Indeed, this file may not have been written by SAS. Otherwise, the anomalous appears to be similar to other test files.
+In addition, the anomalous file is associated with the SAS release "3.2TK". Indeed, this file may not have been written by SAS. Otherwise, the anomalous file appears to be formatted similarly to other test files.
 
 
 SAS7BDAT Pages
 ==============
 
-Following the SAS7BDAT header are pages of data. Each page can be one of (at least) four types. The first three are those that contain meta-information (e.g. field/column attributes), packed binary data, or a combination of both. These types are denoted 'meta', 'data', and 'mix' respectively. Meta-information is required to correctly interpret the packed binary information. Hence, this information must be parsed first. In test files (see ``data/sources.csv``), 'meta' and 'mix' pages always precede 'data' pages. In some test data files, there is a fourth page type, denoted 'amd' which appears to encode additional meta information. This page usually occurs last, and appears to contain amended meta information.
+Following the SAS7BDAT header are pages of data. Each page can be one of (at least) four types. The first three are those that contain meta-information (e.g. field/column attributes), packed binary data, or a combination of both. These types are denoted 'meta', 'data', and 'mix' respectively. Meta-information is required to correctly interpret the packed binary information. Hence, this information must be parsed first. In test files, 'meta' and 'mix' pages always precede 'data' pages. In some test data files, there is a fourth page type, denoted 'amd' which appears to encode additional meta information. This page usually occurs last, and appears to contain amended meta information.
 
-The `page offset table`_ below describes each page type. Byte offsets appended with one of '(meta/mix)', '(mix)', or '(data)' indicate that the corresponding length and description apply only to pages of the listed type. For now, the internal structure of the 'amd' page type is considered identical to the 'meta' page type.   
+The `page offset table`_ below describes each page type. Byte offsets appended with one of '(meta/mix)', '(mix)', or '(data)' indicate that the corresponding length and description apply only to pages of the listed type. Provisionally, the internal structure of the 'amd' page type is considered identical to the 'meta' page type.   
 
 Page Offset Table
 -----------------
@@ -181,11 +185,11 @@ Page Offset Table
 ==============  ==============	======  ===============================================
 offset		length		conf.	description
 ==============  ==============	======  ===============================================
-0		4		low	int, page sequence signature? (values different but close on each page)
+0		4		low	int, page sequence signature? (values different but similar on each page)
 4		12 / 28		low	*????????????* length 12 or 28 (**u64**)
-16 / 32		2		medium	int, bit field `page type`_ := PGTYPE
-18 / 34		2		medium	int, number of total data blocks := TDB
-20 / 36		2		medium	int, number of `subheader pointers`_ := L (may be zero); L <= TDB
+16 / 32		2		medium	int, bit field `page type`_ := _PGTYPE
+18 / 34		2		medium	int, number of total data blocks := _`TDB`
+20 / 36		2		medium	int, number of `subheader pointers`_ := L (may be zero); L <= `TDB`_
 22 / 38		2		low	*????????????*
 24 / 40		L*LSHP		medium	L `subheader pointers`_, LSHP = 12 / 24 (**u64**)
 M		LSHD		medium  subheader data (LSHD determined from subheader pointers; LSHD=0 if L=0); (24 or 40) + L*LSHP := M
@@ -199,8 +203,8 @@ Page Type
 ======	====	==========	========================================	===================
 PGTYPE	name	subheaders	uncompressed row data (after subheaders)	compressed row data (in subheaders)
 ======	====	==========	========================================	===================
-0	meta	yes (L>0)	no (TDB=L)					yes
-256	data	no (L=0)	yes (NRD=TDB)					no
+0	meta	yes (L>0)	no  (TDB=L)					yes
+256	data	no  (L=0)	yes (NRD=TDB)					no
 512	mix	yes (L>0)	yes (NRD=TDB-L)					no
 1024	amd	yes?		yes?						no?
 16384	meta	yes (L>0)	no (TDB=L)					yes

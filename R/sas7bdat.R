@@ -142,22 +142,42 @@ PAGE_META <- 0
 PAGE_DATA <- 256        #1<<8
 PAGE_MIX  <- c(512,640) #1<<9,1<<9|1<<7
 PAGE_AMD  <- 1024       #1<<10
+PAGE_METC <- 16384      #1<<14 (compressed data)
+PAGE_COMP <- -28672     #~(1<<14|1<<13|1<<12) 
 PAGE_MIX_DATA <- c(PAGE_MIX, PAGE_DATA)
 PAGE_META_MIX_AMD <- c(PAGE_META, PAGE_MIX, PAGE_AMD)
-PAGE_ANY  <- c(PAGE_META_MIX_AMD, PAGE_DATA)
+PAGE_ANY  <- c(PAGE_META_MIX_AMD, PAGE_DATA, PAGE_METC, PAGE_COMP)
 
-read_subheaders <- function(page) {
+page_type_strng <- function(type) {
+    if(type %in% PAGE_META)
+        return('meta')
+    if(type %in% PAGE_DATA)
+        return('data')
+    if(type %in% PAGE_MIX)
+        return('mix')
+    if(type %in% PAGE_AMD)
+        return('amd')
+    return('unknown')
+}
+
+read_subheaders <- function(page, u64) {
     subhs <- list()
     subh_total <- 0
     if(!(page$type %in% PAGE_META_MIX_AMD))
         return(subhs)
+    # page offset of subheader pointers
+    oshp <- if(u64) 40 else 24
+    # length of subheader pointers
+    lshp <- if(u64) 24 else 12
+    # length of first two subheader fields
+    lshf <- if(u64) 8  else 4
     for(i in 1:page$subh_count) {
         subh_total <- subh_total + 1
-        base <- 24 + (i - 1) * 12
+        base <- oshp + (i - 1) * lshp
         subhs[[subh_total]] <- list()
         subhs[[subh_total]]$page <- page$page 
-        subhs[[subh_total]]$offset <- read_int(page$data, base, 4)
-        subhs[[subh_total]]$length <- read_int(page$data, base + 4, 4)
+        subhs[[subh_total]]$offset <- read_int(page$data, base, lshf)
+        subhs[[subh_total]]$length <- read_int(page$data, base + lshf, lshf)
         if(subhs[[subh_total]]$length > 0) {
             subhs[[subh_total]]$raw <- read_raw(page$data, 
                 subhs[[subh_total]]$offset, subhs[[subh_total]]$length)
@@ -263,7 +283,7 @@ splice_col_attr_subheaders <- function(col_attr) {
     return(list(raw=raw))
 }
 
-read.sas7bdat <- function(file) {
+read.sas7bdat <- function(file, debug=FALSE) {
     if(inherits(file, "connection") && isOpen(file, "read")) {
         con <- file
         close_con <- FALSE
@@ -288,6 +308,13 @@ read.sas7bdat <- function(file) {
         align1 <- 4
     } else {
         align1 <- 0
+    }
+
+    # If align1 == 4, file is u64 type
+    if(align1 == 4) {
+        u64 <- TRUE
+    } else {
+        u64 <- FALSE
     }
 
     align2 <- read_raw(header, 35, 1)
@@ -321,12 +348,10 @@ read.sas7bdat <- function(file) {
     datemodified <- datemodified + as.POSIXct("1960/01/01", format="%Y/%m/%d")
     
     # Read the remaining header
-    header_length <- read_int(header, 196+align2, 4)
+    header_length <- read_int(header, 196 + align2, 4)
     header <- c(header, readBin(con, "raw", header_length-288, 1))
     if(length(header) < header_length)
         stop("header too short (not a sas7bdat file?)")
-
-
 
     page_size   <- read_int(header, 200 + align2, 4)
     if(page_size < 0)
@@ -340,6 +365,7 @@ read.sas7bdat <- function(file) {
     SAS_release <- read_str(header, 216 + align1 + align2, 8)
 
     # SAS_host is a 16 byte field, but only the first eight are used
+    # FIXME: It would be preferable to eliminate this check
     SAS_host    <- read_str(header, 224 + align1 + align2, 8)
     if(!(SAS_host %in% KNOWNHOST))
         stop(paste("unknown host", SAS_host, BUGREPORT))
@@ -354,15 +380,16 @@ read.sas7bdat <- function(file) {
         pages[[page_num]] <- list()
         pages[[page_num]]$page <- page_num
         pages[[page_num]]$data <- readBin(con, "raw", page_size, 1)
-        pages[[page_num]]$type <- read_int(pages[[page_num]]$data, 16, 2)
-        if(pages[[page_num]]$type %in%  PAGE_META_MIX_AMD)
-            pages[[page_num]]$subh_count <- read_int(pages[[page_num]]$data, 20, 2)
+        pages[[page_num]]$type <- read_int(pages[[page_num]]$data, if(u64) 32 else 16, 2)
+        pages[[page_num]]$type_strng <- page_type_strng(pages[[page_num]]$type)
+        pages[[page_num]]$blck_count <- read_int(pages[[page_num]]$data, if(u64) 34 else 18, 2) 
+        pages[[page_num]]$subh_count <- read_int(pages[[page_num]]$data, if(u64) 36 else 20, 2)
     }
 
-    # Read subheaders
+    # Read all subheaders
     subhs <- list()
     for(page in pages)
-        subhs <- c(subhs, read_subheaders(page)) 
+        subhs <- c(subhs, read_subheaders(page, u64)) 
 
     # Parse row size subheader
     row_size <- get_subhs(subhs, SUBH_ROWSIZE)
@@ -428,10 +455,14 @@ read.sas7bdat <- function(file) {
         col_info[[i]] <- c(col_name[[i]], col_attr[[i]], col_labs[[i]]) 
 
     # Check pages for known type 
-    for(page_num in 1:page_count)
+    for(page_num in 1:page_count) {
         if(!(pages[[page_num]]$type %in% PAGE_ANY))
             stop(paste("page", page_num, "has unknown type:",
                 pages[[page_num]]$type, BUGREPORT))
+        if(pages[[page_num]]$type %in% c(PAGE_METC, PAGE_COMP))
+            stop("file contains compressed data")
+    }
+        
 
     # Parse subheaders
 
@@ -517,5 +548,9 @@ read.sas7bdat <- function(file) {
     attr(data, 'OS.name')       <- OS_name
     attr(data, 'endianess')     <- endianess
     attr(data, 'winunix')       <- winunix
+    if(debug) {
+        attr(data, 'pages')     <- pages
+        attr(data, 'subhs')     <- subhs
+    }
     return(data)
 }
