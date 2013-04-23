@@ -226,19 +226,26 @@ read_column_labels_formats <- function(col_labs, col_text) {
     return(labs)
 }
  
-read_column_attributes <- function(col_attr) {
+read_column_attributes <- function(col_attr, u64) {
     info <- list()
-    info_count <- 0
+    info_ct <- 0
+    lcav <- if(u64) 16 else 12
+    cmax <- (subh$length - if(u64) 28 else 20)/lcav
     for(subh in col_attr) {
-        for(i in 1:((subh$length-20)/12)) {
-            info_count <- info_count + 1
-            info[[info_count]] <- list()
-            base <- 12 + (i-1) * 12
-            info[[info_count]]$offset <- read_int(subh$raw, base, 4)
-            info[[info_count]]$length <- read_int(subh$raw, base + 4, 4)
-            info[[info_count]]$type   <- read_int(subh$raw, base + 10, 2)
-            info[[info_count]]$type   <- ifelse(info[[info_count]]$type == 1,
-            "numeric", "character")
+        for(i in 1:cmax) {
+            info_ct <- info_ct + 1
+            info[[info_ct]] <- list()
+            base <- lcav + (i-1) * lcav
+            info[[info_ct]]$offset <- read_int(subh$raw, base,
+                                               if(u64) 8 else 4)
+            info[[info_ct]]$length <- read_int(subh$raw,
+                                               base + if(u64) 8 else 4,
+                                               4)
+            info[[info_ct]]$type   <- read_int(subh$raw,
+                                               base + if(u64) 14 else 10,
+                                               1)
+            info[[info_ct]]$type   <- ifelse(info[[info_ct]]$type == 1,
+                                             "numeric", "character")
         }
     }
     return(info)
@@ -397,11 +404,21 @@ read.sas7bdat <- function(file, debug=FALSE) {
         stop(paste("found", length(row_size),
             "row size subheaders where 1 expected", BUGREPORT))
     row_size <- row_size[[1]]
-    row_length   <- read_int(row_size$raw, 20, 4)
-    row_count    <- read_int(row_size$raw, 24, 4)
-    col_count_p1 <- read_int(row_size$raw, 36, 4)
-    col_count_p2 <- read_int(row_size$raw, 40, 4)
-    row_count_fp <- read_int(row_size$raw, 60, 4)
+    row_length   <- read_int(row_size$raw,
+                             if(u64) 40 else 20,
+                             if(u64) 8  else 4)
+    row_count    <- read_int(row_size$raw,
+                             if(u64) 48 else 24,
+                             if(u64) 8  else 4)
+    col_count_p1 <- read_int(row_size$raw,
+                             if(u64) 72 else 36,
+                             if(u64) 8  else 4)
+    col_count_p2 <- read_int(row_size$raw,
+                             if(u64) 80 else 40,
+                             if(u64) 8  else 4)
+    row_count_fp <- read_int(row_size$raw,
+                             if(u64) 120 else 60,
+                             if(u64) 8   else 4)
 
     # Parse col size subheader
     col_size <- get_subhs(subhs, SUBH_COLSIZE)
@@ -409,7 +426,9 @@ read.sas7bdat <- function(file, debug=FALSE) {
         stop(paste("found", length(col_size),
             "column size subheaders where 1 expected", BUGREPORT))
     col_size <- col_size[[1]]
-    col_count_6  <- read_int(col_size$raw, 4, 4)
+    col_count_6  <- read_int(col_size$raw,
+                             if(u64) 8 else 4,
+                             if(u64) 8 else 4)
     col_count    <- col_count_6
 
     #if((col_count_p1 + col_count_p2) != col_count_6)
@@ -421,12 +440,14 @@ read.sas7bdat <- function(file, debug=FALSE) {
         stop(paste("no column text subheaders found", BUGREPORT))
 
     # Test for COMPRESS=CHAR compression
-    if("SASYZCRL" == read_str(col_text[[1]]$raw, 16, 8))
-        stop(paste("file uses unsupported CHAR compression"))
+    # This test is done earlier at the page level
+    #if("SASYZCRL" == read_str(col_text[[1]]$raw, 16, 8))
+    #    stop(paste("file uses unsupported CHAR compression"))
 
     col_attr <- get_subhs(subhs, SUBH_COLATTR)            
     if(length(col_attr) < 1)
         stop(paste("no column attribute subheaders found", BUGREPORT))
+
     col_attr <- read_column_attributes(col_attr)
     if(length(col_attr) != col_count)
         stop(paste("found", length(col_attr), 
@@ -463,32 +484,6 @@ read.sas7bdat <- function(file, debug=FALSE) {
             stop("file contains compressed data")
     }
         
-
-    # Parse subheaders
-
-    # Parse subheader count subheader
-    # At present, the data stored in this subheader is not
-    # necessary, but might be used in the future for verification.
-    # The column attribute, text, name, and list subheaders are 
-    # known to occur multiple times.
-
-    #subh_cnt <- get_subhs(subhs, SUBH_SUBHCNT)
-    #if(length(subh_cnt) != 1)
-    #    stop(paste("found", length(subh_cnt),
-    #        "subheader count subheaders where 1 expected", BUGREPORT))
-    #subh_cnt <- subh_cnt[[1]]
-    #subh_cnts <- list()
-    #for(scnt in 1:11) {
-    #    base <- 84 + (scnt - 1) * 20
-    #    subh_cnts[[scnt]]       <- list()
-    #    subh_cnts[[scnt]]$sig   <- read_raw(subh_cnt$raw, base, 4)
-    #    subh_cnts[[scnt]]$page1 <- read_int(subh_cnt$raw, base + 4, 4)
-    #    subh_cnts[[scnt]]$loc1  <- read_int(subh_cnt$raw, base + 8, 4)
-    #    subh_cnts[[scnt]]$pagel <- read_int(subh_cnt$raw, base + 12, 4)
-    #    subh_cnts[[scnt]]$locl  <- read_int(subh_cnt$raw, base + 16, 4)
-    #}
-
-
     # Parse data
     data  <- list()
     for(col in col_info)
