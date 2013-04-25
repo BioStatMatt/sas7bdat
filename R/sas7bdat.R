@@ -1,4 +1,4 @@
-#    Copyright (C) 2011 Matt Shotwell, VUMC
+#    Copyright (C) 2013 Matt Shotwell, VUMC
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -187,41 +187,53 @@ read_subheaders <- function(page, u64) {
     return(subhs)
 }
 
-read_column_names <- function(col_name, col_text) {
+read_column_names <- function(col_name, col_text, u64) {
     names <- list()
     name_count <- 0
+    offp <- if(u64) 8 else 4
     for(subh in col_name) {
-        for(i in 1:((subh$length - 20)/8)) {
+        cmax <- (subh$length - if(u64) 28 else 20)/8
+        for(i in 1:cmax) {
             name_count <- name_count + 1
             names[[name_count]] <- list()
-            base <- 12 + (i-1) * 8
-            txt  <- read_int(subh$raw, base, 2)
-            off  <- read_int(subh$raw, base + 2, 2) + 4
+            base <- (if(u64) 16 else 12) + (i-1) * 8
+            hdr  <- read_int(subh$raw, base, 2)
+            off  <- read_int(subh$raw, base + 2, 2)
             len  <- read_int(subh$raw, base + 4, 2)
-            names[[name_count]]$name <- read_str(col_text[[txt+1]]$raw, off, len)
+            names[[name_count]]$name <- read_str(col_text[[hdr+1]]$raw,
+                                                 off + offp, len)
         }
     }
     return(names)
 }
 
-read_column_labels_formats <- function(col_labs, col_text) {
+read_column_labels_formats <- function(col_labs, col_text, u64) {
     if(length(col_labs) < 1)
         return(NULL)
+    offp <- if(u64) 8  else 4
     labs <- list()
     for(i in 1:length(col_labs)) {
         labs[[i]] <- list()
-        base <- 34
-        txt  <- read_int(col_labs[[i]]$raw, base, 2)
-        off  <- read_int(col_labs[[i]]$raw, base + 2, 2) + 4
+        base <- if(u64) 46 else 34
+        hdr  <- read_int(col_labs[[i]]$raw, base, 2)
+        off  <- read_int(col_labs[[i]]$raw, base + 2, 2)
         len  <- read_int(col_labs[[i]]$raw, base + 4, 2)
         if(len > 0)
-            labs[[i]]$format <- read_str(col_text[[txt+1]]$raw, off, len)
-        base <- 40
-        txt  <- read_int(col_labs[[i]]$raw, base, 2)
-        off  <- read_int(col_labs[[i]]$raw, base + 2, 2) + 4
+            labs[[i]]$format <- read_str(col_text[[hdr+1]]$raw,
+                                         off + offp, len)
+        labs[[i]]$fhdr <- hdr;
+        labs[[i]]$foff <- off
+        labs[[i]]$flen <- len
+        base <- if(u64) 52 else 40
+        hdr  <- read_int(col_labs[[i]]$raw, base, 2)
+        off  <- read_int(col_labs[[i]]$raw, base + 2, 2)
         len  <- read_int(col_labs[[i]]$raw, base + 4, 2)
         if(len > 0)
-            labs[[i]]$label <- read_str(col_text[[txt+1]]$raw, off, len)
+            labs[[i]]$label <- read_str(col_text[[hdr+1]]$raw,
+                                        off + offp, len)
+        labs[[i]]$lhdr <- hdr;
+        labs[[i]]$loff <- off
+        labs[[i]]$llen <- len
     }
     return(labs)
 }
@@ -230,8 +242,8 @@ read_column_attributes <- function(col_attr, u64) {
     info <- list()
     info_ct <- 0
     lcav <- if(u64) 16 else 12
-    cmax <- (subh$length - if(u64) 28 else 20)/lcav
     for(subh in col_attr) {
+        cmax <- (subh$length - if(u64) 28 else 20)/lcav
         for(i in 1:cmax) {
             info_ct <- info_ct + 1
             info[[info_ct]] <- list()
@@ -448,7 +460,7 @@ read.sas7bdat <- function(file, debug=FALSE) {
     if(length(col_attr) < 1)
         stop(paste("no column attribute subheaders found", BUGREPORT))
 
-    col_attr <- read_column_attributes(col_attr)
+    col_attr <- read_column_attributes(col_attr, u64)
     if(length(col_attr) != col_count)
         stop(paste("found", length(col_attr), 
             "column attributes where", col_count,
@@ -457,13 +469,19 @@ read.sas7bdat <- function(file, debug=FALSE) {
     col_name <- get_subhs(subhs, SUBH_COLNAME)
     if(length(col_name) < 1)
         stop(paste("no column name subheaders found", BUGREPORT))
-    col_name <- read_column_names(col_name, col_text)
+
+    col_name <- read_column_names(col_name, col_text, u64)
     if(length(col_name) != col_count)
         stop(paste("found", length(col_name), 
             "column names where", col_count, "expected", BUGREPORT))
 
+    # Make column names unique, if not already
+    col_name_uni <- make.unique(sapply(col_name, function(x)x$name)) 
+    for(i in 1:length(col_name_uni))
+        col_name[[i]]$name <- col_name_uni[i]
+
     col_labs <- get_subhs(subhs, SUBH_COLLABS)
-    col_labs <- read_column_labels_formats(col_labs, col_text)
+    col_labs <- read_column_labels_formats(col_labs, col_text, u64)
     if(is.null(col_labs))
         col_labs <- list(length=col_count)
     if(length(col_labs) != col_count)
@@ -495,14 +513,16 @@ read.sas7bdat <- function(file, debug=FALSE) {
         #FIXME are there data on pages of type 4?
         if(!(page$type %in% PAGE_MIX_DATA))
             next 
+        base <- (if(u64) 32 else 16) + 8
         if(page$type %in% PAGE_MIX) {
             row_count_p <- row_count_fp
-            base <- 24 + page$subh_count * 12
-            base <- base + base %% 8
+            # skip subheader pointers
+            base <- base + page$subh_count * if(u64) 24 else 12
         } else {
-            row_count_p <- read_int(page$data, 18, 4)
-            base <- 24
+            row_count_p <- read_int(page$data, if(u64) 34 else 18, 2)
         }
+        # round up to 8-byte boundary	
+        base <- ((base+7) %/% 8) * 8 + base %% 8
         if(row_count_p > row_count)
             row_count_p <- row_count
         for(row in (row+1):(row+row_count_p)) {

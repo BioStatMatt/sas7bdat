@@ -16,7 +16,7 @@ by:
     | clint@stanford.edu
 
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/.
+Copyright (C) 2013 is retained by the authors listed above. This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/3.0/.
 
 Contents
 ========
@@ -192,7 +192,7 @@ B+2		2		medium	int, data block count := _`BC`
 B+4		2		medium	int, `subheader pointers`_ count := _`SC` <= `BC`_
 B+6		2		low	*????????????*
 B+8		SC*SL		medium	SC `subheader pointers`_, SL = 12|24
-B+8+SC*SL	DL		medium	if NRD>0, 8 byte alignment; DL = (B+8+SC*SL+PL+7) % 8 * 8
+B+8+SC*SL	DL		medium	if NRD>0, 8 byte alignment; DL = (B+8+SC*SL+7) % 8 * 8
 B+8+SC*SL+DL	RC*`RL`_	medium	`SAS7BDAT packed binary data`_ data row count := RC = (BC-SC)
 C		%`PL`_		medium  subheader data and/or filler; C = (B+8+SC*SL+DL+RC*RL)
 ==============  ==============	======  ===============================================
@@ -443,7 +443,7 @@ offset	length	conf.	description
 6|10	2	low	*????????????*
 8|12	2	low	*????????????*
 10|14	2	low	*????????????*
-12|16	8*CMAX	medium	`column name pointers`_ (see below), CMAX=(QL-20/28)/8
+12|16	8*CMAX	medium	`column name pointers`_ (see below), CMAX=(QL-20|28)/8
 MCN	8|12	low	zeros, 12|16 + 8*CMAX := MCN
 =======	======  ======  ====================================================
 
