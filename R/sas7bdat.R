@@ -76,7 +76,7 @@ generate.sas7bdat.source <- function(fn, url) {
         attr(dat, 'OS.version')  -> OS_version
         attr(dat, 'OS.maker')    -> OS_maker
         attr(dat, 'OS.name')     -> OS_name
-        attr(dat, 'endianess')   -> endianess
+        attr(dat, 'endian')      -> endian
         attr(dat, 'winunix')     -> winunix
         dat <- "OK"
     } else {
@@ -87,7 +87,7 @@ generate.sas7bdat.source <- function(fn, url) {
         OS_version   <- ""
         OS_maker     <- ""
         OS_name      <- ""
-        endianess    <- ""
+        endian       <- ""
         winunix      <- ""
         dat <- dat[1]
     }
@@ -96,7 +96,7 @@ generate.sas7bdat.source <- function(fn, url) {
         gzip = sz.gz, bzip2 = sz.bz2, xz = sz.xz, url = url,
         PKGversion = VERSION, message = dat, SASrelease = SAS_release,
         SAShost = SAS_host, OSversion = OS_version, OSmaker = OS_maker,
-        OSname = OS_name, endianess = endianess, winunix = winunix,
+        OSname = OS_name, endian = endian, winunix = winunix,
         stringsAsFactors=FALSE)
 }
 
@@ -114,7 +114,7 @@ update.sas7bdat.sources <- function(ss) {
     return(ss)
 }
     
-VERSION   <- "0.2"
+VERSION   <- "0.4"
 BUGREPORT <- "please report bugs to sas7bdatRbugs@gmail.com"
 CAUTION   <- "please verify data correctness"
 
@@ -273,16 +273,16 @@ check_magic_number <- function(data)
     identical(data[1:length(MAGIC)], MAGIC)
 
 # These functions utilize offset + length addressing
-read_bin <- function(buf, off, len, type)
-    readBin(buf[(off+1):(off+len)], type, 1, len)
-read_raw <- function(buf, off, len)
-    readBin(buf[(off+1):(off+len)], "raw", len, 1)
-read_int <- function(buf, off, len)
-    read_bin(buf, off, len, "integer")
-read_str <- function(buf, off, len)
-    read_bin(buf, off, len, "character")
-read_flo <- function(buf, off, len)
-    read_bin(buf, off, len, "double")
+read_bin <- function(buf, off, len, type, ...)
+    readBin(buf[(off+1):(off+len)], type, 1, len, ...)
+read_raw <- function(buf, off, len, ...)
+    readBin(buf[(off+1):(off+len)], "raw", len, 1, ...)
+read_int <- function(buf, off, len, ...)
+    read_bin(buf, off, len, "integer", ...)
+read_str <- function(buf, off, len, ...)
+    read_bin(buf, off, len, "character", ...)
+read_flo <- function(buf, off, len, ...)
+    read_bin(buf, off, len, "double", ...)
 
 get_subhs <- function(subhs, signature) {
     keep <- sapply(subhs, function(subh) {
@@ -343,11 +343,11 @@ read.sas7bdat <- function(file, debug=FALSE) {
         align2 <- 0
     }
 
-    endianess <- read_raw(header, 37, 1)
-    if(identical(endianess, as.raw(0x01))) {
-        endianess <- "little"
+    endian <- read_raw(header, 37, 1)
+    if(identical(endian, as.raw(0x01))) {
+        endian <- "little"
     } else {
-        endianess <- "big"
+        endian <- "big"
         stop("big endian files are not supported")
     }
 
@@ -561,7 +561,7 @@ read.sas7bdat <- function(file, debug=FALSE) {
     attr(data, 'OS.version')    <- OS_version
     attr(data, 'OS.maker')      <- OS_maker
     attr(data, 'OS.name')       <- OS_name
-    attr(data, 'endianess')     <- endianess
+    attr(data, 'endian')        <- endian
     attr(data, 'winunix')       <- winunix
     if(debug) {
         attr(data, 'pages')     <- pages

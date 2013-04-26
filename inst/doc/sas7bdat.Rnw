@@ -87,7 +87,7 @@ by:
 
 \end{quote}
 
-This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit \url{http://creativecommons.org/licenses/by-sa/3.0/}.
+Copyright (C) 2013 is retained by the authors listed above. This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. To view a copy of this license, visit \url{http://creativecommons.org/licenses/by-sa/3.0/}.
 
 
 %___________________________________________________________________________
@@ -135,24 +135,26 @@ The information below was deduced by examining the contents of many SAS7BDAT dat
 
 SAS7BDAT files consist of binary encoded data. Data files encoded in this format often have the extension '.sas7bdat'. The name 'SAS7BDAT' is not official, but is used throughout this document to refer to SAS database files formatted according to the descriptions below.
 
-There are significant differences in the SAS7BDAT format across operating systems and computer hardware platforms (32bit vs. 64bit). See the section on \hyperref[platform-differences]{platform differences} for more details. The format described below is sufficient to read all the entire collection of test files referenced in \texttt{data/sas7bdat.sources.RData} directory (i.e. files associated with 32bit and some 64bit builds of SAS for Microsoft Windows, and \textbf{u64} SAS versions).  This includes files created with COMPRESS=CHAR.  The format described here is probably not sufficient to \textbf{write} SAS7BDAT format files, due to the many unknown fields.
+There are significant differences in the SAS7BDAT format depending on the operating systems and computer hardware platforms (32bit vs. 64bit). See the section on \hyperref[platform-differences]{platform differences} for more details. The format described below is sufficient to read the entire collection of test files referenced in \texttt{data/sas7bdat.sources.RData} (i.e. files associated with 32bit and some 64bit builds of SAS for Microsoft Windows, and \textbf{u64} SAS versions).  This includes files created with COMPRESS=CHAR. The format described here is probably not sufficient to \textbf{write} SAS7BDAT format files, due to lingering uncertainties.
 
-The figure below illustrates the overall structure of the SAS7BDAT database. Each file consists of a header (length := LH), followed by PC pages, each of length PS bytes (PC and PS are shorthand for 'page count' and 'page size' respectively, and are used to denote these quantities throughout this document).:
+The figure below illustrates the overall structure of the SAS7BDAT database. Each file consists of a header (length := HL bytes), followed by PC pages, each of length PL bytes (PC and PL are shorthand for 'page count' and 'page size' respectively, and are used to denote these quantities throughout this document).:
 %
 \begin{quote}{\ttfamily \raggedright \noindent
 -{}-{}-{}-{}-{}-{}-{}-{}-{}-\\
-|~~~LH~~~|~~header\\
+|~~~HL~~~|~~header\\
 -{}-{}-{}-{}-{}-{}-{}-{}-{}-\\
-|~~~PS~~~|~~page~1\\
+|~~~PL~~~|~~page~1\\
 -{}-{}-{}-{}-{}-{}-{}-{}-{}-\\
-|~~~PS~~~|~~page~2\\
+|~~~PL~~~|~~page~2\\
 -{}-{}-{}-{}-{}-{}-{}-{}-{}-\\
 ~~~...\\
 -{}-{}-{}-{}-{}-{}-{}-{}-{}-\\
-|~~~PS~~~|~~page~PC\\
+|~~~PL~~~|~~page~PC\\
 -{}-{}-{}-{}-{}-{}-{}-{}-{}-
 }
 \end{quote}
+
+Throughout this document, hexadecimal digits are denoted with a preceding 'x', binary digits with a preceding 'b', and decimal digits with no preceding character. For example, see the below \hyperref[table-of-hexadecimal-decimal-and-binary-values]{table of hexadecimal, decimal, and binary values}.
 
 
 %___________________________________________________________________________
@@ -163,9 +165,9 @@ The figure below illustrates the overall structure of the SAS7BDAT database. Eac
   \label{sas7bdat-header}%
 }
 
-The SAS7BDAT file header contains a binary file identifier (\emph{i.e.}, a magic number), the dataset name, timestamp, the number pages (PC), their size (PS) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. Most files encountered encode multi-byte values little-endian (least significant byte first). However, some files have big-endian values. Hence, it appears that multi-byte values are encoded using endianness of the platform where the file was written.  See \hyperref[platform-differences]{Platform Differences} for a table of key test files which differ in several ways.
+The SAS7BDAT file header contains a binary file identifier (\emph{i.e.}, a magic number), the dataset name, timestamp, the number pages (PC), their size (PL) and a variety of other values that pertain to the database as a whole. The purpose of many header fields remain unknown, but are likely to include specifications for data compression and encryption, password protection, and dates/times of creation and/or modification. Most files encountered encode multi-byte values little-endian (least significant byte first). However, some files have big-endian values. Hence, it appears that multi-byte values are encoded using endianness of the platform where the file was written.  See \hyperref[platform-differences]{Platform Differences} for a table of key test files which differ in several ways.
 
-The \emph{offset table} below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. Byte lengths having the form '\%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'int, page size := PS' indicates that the data stored at the corresponding location is an integer representing the page size, which we denote PS. The description \emph{????????????} indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
+The \emph{offset table} below describes the SAS7BDAT file header as a sequence of bytes. Information stored in the table is indexed by its byte offset (first column) in the header and its length (second column) in bytes. For example, the field at offset 0 has length 32 bytes. Hence, bytes 0,1,...,31 comprise the data for this field. Byte lengths having the form '\%n' should read: 'the number of bytes remaining up to, but not including byte n'. The fourth column gives a shorthand description of the data contained at the corresponding offset. For example, 'int, page size := PL' indicates that the data stored at the corresponding location is a signed integer representing the page size, which we denote PL. The description \emph{????????????} indicates that the meaning of data stored at the corresponding offset is unknown. The third column represents the author's confidence (low, medium, high) in the corresponding offset, length, and description. Each offset table in this document is formatted in a similar fashion. Variables defined in an offset table are sometimes used in subsequent tables.
 
 
 %___________________________________________________________________________
@@ -222,7 +224,7 @@ binary, \hyperref[magic-number]{magic number}
  & 
 high
  & 
-binary, \hyperref[alignment]{Alignment}  if (byte==x33) a2=4 else a2=0 .  \textbf{u64} is true if a2=4 (unix 64 bit format).
+binary, \hyperref[alignment]{Alignment}: if (byte==x33) a2=4 else a2=0 .  \textbf{u64} is true if a2=4 (unix 64 bit format).
  \\
 \hline
 
@@ -402,7 +404,7 @@ low
  & 
 high
  & 
-int, length of SAS7BDAT header := LH .  (1024 or 8192)
+int, length of SAS7BDAT header := HL .  (1024 or 8192)
  \\
 \hline
 
@@ -412,7 +414,8 @@ int, length of SAS7BDAT header := LH .  (1024 or 8192)
  & 
 high
  & 
-int, page size := PS
+int, page size := %
+\phantomsection\label{pl}PL
  \\
 \hline
 
@@ -422,7 +425,7 @@ int, page size := PS
  & 
 high
  & 
-int, page count := PC .  Length 4 or 8 (\textbf{u64}), henceforth \textbf{4 / 8}
+int, page count := PC .  Length 4 or 8 (\textbf{u64}), henceforth denoted \textbf{4|8}
  \\
 \hline
 
@@ -528,7 +531,7 @@ double, 3rd timestamp, sometimes zero
 
 336+a1+a2
  & 
-\%LH
+\%HL
  & 
 medium
  & 
@@ -536,11 +539,11 @@ zeros
  \\
 \hline
 
-1024 / 8192
+1024|8192
  &  & 
 medium
  & 
-Total length of header (8192 for \textbf{u64}), LH
+Total length of header (8192 for \textbf{u64}), HL
  \\
 \hline
 \end{longtable*}
@@ -557,15 +560,15 @@ The 8 bytes beginning at offset 32 hold information which affects the offset of 
 
 \item The byte at offset 35 controls an offset before the timestamps.
 
-\item The byte at offset 37 defines byte ordering of ints and doubles (most test files were created on Windows and use Intel byte ordering).
+\item The byte at offset 37 defines byte ordering of ints and doubles (most test files were created on Windows and use Intel byte ordering; little endian).
 
 \item The byte at offset 39 appears to distinguish the OS type, where '1' indicates that the file was generated on a UNIX-like system, such as Linux or SunOS, and '2' indicates the file was generated on a Microsoft Windows platform. However, this does not affect any important fields in the file format.
 \end{list}
 
-The following table describes some of the possible polymorphisms, where the first column contains the hex values for bytes 32-39, the second column shows bytes 216-239 ('.' represents a non-ASCII character or '0').
+The following table describes some of the possible polymorphisms for the 8 bytes at offset 32. The first field lists the name of the file where the sequence was found (see \texttt{data/sas7bdat.sources.RData}), the second lists the eight byte values (hexadecimal), the third field shows bytes 216-239 in ASCII ('.' represents a non-ASCII character or '0'), and the fourth field lists the SAS7BDAT sub-format.
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.246\DUtablewidth}|p{0.246\DUtablewidth}|p{0.255\DUtablewidth}|p{0.203\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.229\DUtablewidth}|p{0.294\DUtablewidth}|p{0.237\DUtablewidth}|p{0.189\DUtablewidth}|}
 \hline
 \textbf{%
 filename
@@ -596,7 +599,7 @@ format
 
 \texttt{compress\_no.sas7bdat}
  & 
-\texttt{22 22 00 32 22 01 02 32}
+\texttt{x22 x22 x00 x32 x22 x01 x02 x32}
  & 
 \texttt{9.0101M3NET\_ASRV........}
  & 
@@ -606,7 +609,7 @@ Windows Intel
 
 \texttt{compress\_yes.sas7bdat}
  & 
-\texttt{22 22 00 32 22 01 02 32}
+\texttt{x22 x22 x00 x32 x22 x01 x02 x32}
  & 
 \texttt{9.0101M3NET\_ASRV........}
  & 
@@ -616,7 +619,7 @@ Windows Intel
 
 \texttt{lowbwt\_i386.sas7bdat}
  & 
-\texttt{22 22 00 32 22 01 02 32}
+\texttt{x22 x22 x00 x32 x22 x01 x02 x32}
  & 
 \texttt{9.0202M0W32\_VSPRO.......}
  & 
@@ -626,7 +629,7 @@ Windows Intel
 
 \texttt{missing\_values.sas7bdat}
  & 
-\texttt{22 22 00 32 22 01 02 32}
+\texttt{x22 x22 x00 x32 x22 x01 x02 x32}
  & 
 \texttt{9.0202M0W32\_VSPRO.......}
  & 
@@ -636,7 +639,7 @@ Windows Intel
 
 \texttt{obs\_all\_perf\_1.sas7bdat}
  & 
-\texttt{22 22 00 32 22 01 02 32}
+\texttt{x22 x22 x00 x32 x22 x01 x02 x32}
  & 
 \texttt{9.0101M3XP\_PRO..........}
  & 
@@ -646,7 +649,7 @@ Windows Intel
 
 \texttt{adsl.sas7bdat}
  & 
-\texttt{22 22 00 33 33 01 02 32}
+\texttt{x22 x22 x00 x33 x33 x01 x02 x32}
  & 
 \texttt{....9.0202M3X64\_ESRV....}
  & 
@@ -656,7 +659,7 @@ Windows x64 Intel
 
 \texttt{eyecarex.sas7bdat}
  & 
-\texttt{22 22 00 33 22 00 02 31}
+\texttt{x22 x22 x00 x33 x22 x00 x02 x31}
  & 
 \texttt{....9.0000M0WIN.........}
  & 
@@ -666,7 +669,7 @@ Unix non-Intel
 
 \texttt{lowbwt\_x64.sas7bdat}
  & 
-\texttt{22 22 00 33 33 01 02 32}
+\texttt{x22 x22 x00 x33 x33 x01 x02 x32}
  & 
 \texttt{....9.0202M2X64\_VSPRO...}
  & 
@@ -676,7 +679,7 @@ Windows x64 Intel
 
 \texttt{natlterr1994.sas7bdat}
  & 
-\texttt{33 22 00 33 33 00 02 31}
+\texttt{x33 x22 x00 x33 x33 x00 x02 x31}
  & 
 \texttt{........9.0101M3SunOS...}
  & 
@@ -686,7 +689,7 @@ u64 Unix non-Intel
 
 \texttt{natlterr2006.sas7bdat}
  & 
-\texttt{33 22 00 33 33 00 02 31}
+\texttt{x33 x22 x00 x33 x33 x00 x02 x31}
  & 
 \texttt{........9.0101M3SunOS...}
  & 
@@ -696,7 +699,7 @@ u64 Unix non-Intel
 
 \texttt{txzips.sas7bdat}
  & 
-\texttt{33 22 00 33 33 01 02 31}
+\texttt{x33 x22 x00 x33 x33 x01 x02 x31}
  & 
 \texttt{........9.0201M0Linux...}
  & 
@@ -705,10 +708,11 @@ u64 Unix Intel
 \hline
 \end{longtable*}
 
+\phantomsection\label{table-of-hexadecimal-decimal-and-binary-values}
 The binary representation for the hexadecimal values present in the table above are given below.
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.145\DUtablewidth}|p{0.098\DUtablewidth}|p{0.156\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.145\DUtablewidth}|p{0.098\DUtablewidth}|p{0.168\DUtablewidth}|}
 \hline
 \textbf{%
 hexadecimal
@@ -733,51 +737,51 @@ binary
 \endfoot
 \endlastfoot
 
-\texttt{01}
+\texttt{x01}
  & 
 \texttt{001}
  & 
-\texttt{00000001}
+\texttt{b00000001}
  \\
 \hline
 
-\texttt{02}
+\texttt{x02}
  & 
 \texttt{002}
  & 
-\texttt{00000010}
+\texttt{b00000010}
  \\
 \hline
 
-\texttt{22}
+\texttt{x22}
  & 
 \texttt{034}
  & 
-\texttt{00010010}
+\texttt{b00010010}
  \\
 \hline
 
-\texttt{31}
+\texttt{x31}
  & 
 \texttt{049}
  & 
-\texttt{00011001}
+\texttt{b00011001}
  \\
 \hline
 
-\texttt{32}
+\texttt{x32}
  & 
 \texttt{050}
  & 
-\texttt{00011010}
+\texttt{b00011010}
  \\
 \hline
 
-\texttt{33}
+\texttt{x33}
  & 
 \texttt{051}
  & 
-\texttt{00011011}
+\texttt{b00011011}
  \\
 \hline
 \end{longtable*}
@@ -791,7 +795,7 @@ binary
   \label{alignment}%
 }
 
-In files generated by 64 bit builds of SAS, 'alignment' means that all data field offsets containing doubles or 8 byte ints should be a factor of 8 bytes. For files generated by 32 bit builds of SAS, the alignment is 4 bytes. Because \hyperref[sas7bdat-packed-binary-data]{SAS7BDAT Packed Binary Data} potentially consist of doubles, it seems that all data rows are 64 bit aligned, regardless of whether the file was written with a 32 bit or 64 bit build of SAS. Alignment of data structures according to the platform word length (4 bytes for 32 bit, and 8 bytes for 64 bit architectures) facilitates efficient operations on data stored in memory. It also suggests that parts of SAS7BDAT data file format are platform dependent. One theory is that the SAS implementation utilizes a common C or C++ structure or class to reference data stored in memory. When compiled, these structures are aligned according to the word length of the target platform. Of course, when SAS was originally written, platform differences may not have been forseeable. Hence, these inconsistencies may not have been intentional.
+In files generated by 64 bit builds of SAS, 'alignment' means that all data field offsets containing doubles or 8 byte ints should be a factor of 8 bytes. For files generated by 32 bit builds of SAS, the alignment is 4 bytes. Because \hyperref[sas7bdat-packed-binary-data]{SAS7BDAT Packed Binary Data} may contain double precision values, it appears that all data rows are 64 bit aligned, regardless of whether the file was written with a 32 bit or 64 bit build of SAS. Alignment of data structures according to the platform word length (4 bytes for 32 bit, and 8 bytes for 64 bit architectures) facilitates efficient operations on data stored in memory. It also suggests that parts of SAS7BDAT data file format are platform dependent. One theory is that the SAS implementation utilizes a common C or C++ structure or class to reference data stored in memory. When compiled, these structures are aligned according to the word length of the target platform. Of course, when SAS was originally written, platform differences may not have been forseeable. Hence, these inconsistencies may not have been intentional.
 
 
 %___________________________________________________________________________
@@ -805,24 +809,24 @@ In files generated by 64 bit builds of SAS, 'alignment' means that all data fiel
 The SAS7BDAT magic number is the following 32 byte (hex) sequence.:
 %
 \begin{quote}{\ttfamily \raggedright \noindent
-00~00~00~00~~~00~00~00~00\\
-00~00~00~00~~~c2~ea~81~60\\
-b3~14~11~cf~~~bd~92~08~00\\
-09~c7~31~8c~~~18~1f~10~11
+x00~x00~x00~x00~~~x00~x00~x00~x00\\
+x00~x00~x00~x00~~~xc2~xea~x81~x60\\
+xb3~x14~x11~xcf~~~xbd~x92~x08~x00\\
+x09~xc7~x31~x8c~~~x18~x1f~x10~x11
 }
 \end{quote}
 
-In all test files except one, the magic number above holds. The one anomalous file has the following magic number:
+In all test files except one (not listed in \texttt{data/sas7bdat.sources.RData}), the magic number above holds. The one anomalous file has the following magic number:
 %
 \begin{quote}{\ttfamily \raggedright \noindent
-00~00~00~00~~~00~00~00~00\\
-00~00~00~00~~~00~00~00~00\\
-00~00~00~00~~~00~00~00~00\\
-00~00~00~00~~~18~1f~10~11
+x00~x00~x00~x00~~~x00~x00~x00~x00\\
+x00~x00~x00~x00~~~x00~x00~x00~x00\\
+x00~x00~x00~x00~~~x00~x00~x00~x00\\
+x00~x00~x00~x00~~~x18~x1f~x10~x11
 }
 \end{quote}
 
-In addition, the file is associated with the SAS release ``3.2TK''. Indeed, this file may not have been written by SAS. Otherwise, the anomalous appears to be similar to other test files.
+In addition, the anomalous file is associated with the SAS release ``3.2TK''. Indeed, this file may not have been written by SAS. Otherwise, the anomalous file appears to be formatted similarly to other test files.
 
 
 %___________________________________________________________________________
@@ -833,9 +837,9 @@ In addition, the file is associated with the SAS release ``3.2TK''. Indeed, this
   \label{sas7bdat-pages}%
 }
 
-Following the SAS7BDAT header are pages of data. Each page can be one of (at least) four types. The first three are those that contain meta-information (e.g. field/column attributes), packed binary data, or a combination of both. These types are denoted 'meta', 'data', and 'mix' respectively. Meta-information is required to correctly interpret the packed binary information. Hence, this information must be parsed first. In test files (see \texttt{data/sources.csv}), 'meta' and 'mix' pages always precede 'data' pages. In some test data files, there is a fourth page type, denoted 'amd' which appears to encode additional meta information. This page usually occurs last, and appears to contain amended meta information.
+Following the SAS7BDAT header are pages of data. Each page can be one of (at least) four types. The first three are those that contain meta-information (e.g. field/column attributes), packed binary data, or a combination of both. These types are denoted 'meta', 'data', and 'mix' respectively. Meta-information is required to correctly interpret the packed binary information. Hence, this information must be parsed first. In test files, 'meta' and 'mix' pages always precede 'data' pages. In some test data files, there is a fourth page type, denoted 'amd' which appears to encode additional meta information. This page usually occurs last, and appears to contain amended meta information.
 
-The \hyperref[page-offset-table]{page offset table} below describes each page type. Byte offsets appended with one of '(meta/mix)', '(mix)', or '(data)' indicate that the corresponding length and description apply only to pages of the listed type. For now, the internal structure of the 'amd' page type is considered identical to the 'meta' page type.
+The \hyperref[page-offset-table]{page offset table} below describes each page type. Byte offsets appended with one of '(meta/mix)', '(mix)', or '(data)' indicate that the corresponding length and description apply only to pages of the listed type. Provisionally, the internal structure of the 'amd' page type is considered identical to the 'meta' page type.
 
 
 %___________________________________________________________________________
@@ -847,7 +851,7 @@ The \hyperref[page-offset-table]{page offset table} below describes each page ty
 }
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.108\DUtablewidth}|p{0.108\DUtablewidth}|p{0.053\DUtablewidth}|p{0.680\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.146\DUtablewidth}|p{0.146\DUtablewidth}|p{0.071\DUtablewidth}|p{0.587\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -882,13 +886,13 @@ description
  & 
 low
  & 
-int, page sequence signature? (values different but close on each page)
+int, page sequence signature?
  \\
 \hline
 
 4
  & 
-12 / 28
+12|28
  & 
 low
  & 
@@ -896,37 +900,39 @@ low
  \\
 \hline
 
-16 / 32
+B
  & 
 2
  & 
 medium
  & 
-int, bit field \hyperref[page-type]{page type} := PGTYPE
+int, bit field \hyperref[page-type]{page type} := \_PGTYPE; B = 16|32
  \\
 \hline
 
-18 / 34
+B+2
  & 
 2
  & 
 medium
  & 
-int, number of total data blocks := TDB
+int, data block count := %
+\phantomsection\label{bc}BC
  \\
 \hline
 
-20 / 36
+B+4
  & 
 2
  & 
 medium
  & 
-int, number of \hyperref[subheader-pointers]{subheader pointers} := L (may be zero); L <= TDB
+int, \hyperref[subheader-pointers]{subheader pointers} count := %
+\phantomsection\label{sc}SC <= \hyperref[bc]{BC}
  \\
 \hline
 
-22 / 38
+B+6
  & 
 2
  & 
@@ -936,43 +942,43 @@ low
  \\
 \hline
 
-24 / 40
+B+8
  & 
-L*LSHP
+SC*SL
  & 
 medium
  & 
-L \hyperref[subheader-pointers]{subheader pointers}, LSHP = 12 / 24 (\textbf{u64})
+SC \hyperref[subheader-pointers]{subheader pointers}, SL = 12|24
  \\
 \hline
 
-M
+B+8+SC*SL
  & 
-LSHD
+DL
  & 
 medium
  & 
-subheader data (LSHD determined from subheader pointers; LSHD=0 if L=0); (24 or 40) + L*LSHP := M
+if NRD>0, 8 byte alignment; DL = (B+8+SC*SL+7) \% 8 * 8
  \\
 \hline
 
-MD
+B+8+SC*SL+DL
  & 
-LPAD
+RC*`RL`\_
  & 
 medium
  & 
-padding field for double alignment if NRD>0; MD = M+LSHD; LPAD = (8-MD\%8) if (MD\%8>0) else 0
+\hyperref[sas7bdat-packed-binary-data]{SAS7BDAT packed binary data} data row count := RC = (BC-SC)
  \\
 \hline
 
-MD+LPAD
+C
  & 
-NRD*ROWLENB
+\%`PL`\_
  & 
 medium
  & 
-\hyperref[sas7bdat-packed-binary-data]{SAS7BDAT packed binary data} for (TDB-L) := NRD rows of data
+subheader data and/or filler; C = (B+8+SC*SL+DL+RC*RL)
  \\
 \hline
 \end{longtable*}
@@ -1024,9 +1030,9 @@ compressed row data (in subheaders)
  & 
 meta
  & 
-yes (L>0)
+yes (SC>0)
  & 
-no (TDB=L)
+no  (BC=SC)
  & 
 yes
  \\
@@ -1036,9 +1042,9 @@ yes
  & 
 data
  & 
-no (L=0)
+no  (SC=0)
  & 
-yes (NRD=TDB)
+yes (RC=BC)
  & 
 no
  \\
@@ -1048,9 +1054,9 @@ no
  & 
 mix
  & 
-yes (L>0)
+yes (SC>0)
  & 
-yes (NRD=TDB-L)
+yes (RC=BC-SC)
  & 
 no
  \\
@@ -1072,9 +1078,9 @@ no?
  & 
 meta
  & 
-yes (L>0)
+yes (SC>0)
  & 
-no (TDB=L)
+no (BC=SC)
  & 
 yes
  \\
@@ -1093,14 +1099,14 @@ no
 \hline
 \end{longtable*}
 
-There are at least four page types 'meta', 'data', 'mix', and 'amd'. These types are encoded in the most significant byte of a two byte bit field at offset 16 / 32. If no bit is set, the following page is of type 'meta'. If the first, second, or third bits are set, then the page is of type 'data', 'mix', or 'amd', respectively. Hence, if the two bytes are interpreted as an unsigned integer, then the 'meta', 'data', 'mix', and 'amd' types correspond to 0, 256, 512, and 1024, respectively. In compressed files, other bits (and sometimes multiple bits) have been set (e.g., \texttt{1 <{}< 16 | 1 <{}< 13}, which is \texttt{-28672} signed, or \texttt{36864} unsigned). However, the pattern is unclear.
+There are at least four page types 'meta', 'data', 'mix', and 'amd'. These types are encoded in the most significant byte of a two byte bit field at page offset 16|32. If no bit is set, the following page is of type 'meta'. If the first, second, or third bits are set, then the page is of type 'data', 'mix', or 'amd', respectively. Hence, if the two bytes are interpreted as an unsigned integer, then the 'meta', 'data', 'mix', and 'amd' types correspond to 0, 256, 512, and 1024, respectively. In compressed files, other bits (and sometimes multiple bits) have been set (e.g., \texttt{1 <{}< 16 | 1 <{}< 13}, which is \texttt{-28672} signed, or \texttt{36864} unsigned). However, the pattern is unclear.
 
-If a page is of type 'meta', 'mix', or 'amd', data beginning at offset byte 24 / 40 are a sequence of L LSHP-byte \hyperref[subheader-pointers]{subheader pointers}, which point to an offset farther down the page. \hyperref[sas7bdat-subheaders]{SAS7BDAT Subheaders} stored at these offsets hold meta information about the database, including the column names, labels, and types.
-If a page is of type 'mix', then \textbf{packed binary data begin at the next 8 byte boundary following the last subheader pointer}. In this case, the data begin at offset MD+LPAD, with LPAD = (8 - MD \% 8) if (MD\%8 > 0) else 0, where '\%' is the modulo operator.
+If a page is of type 'meta', 'mix', or 'amd', data beginning at offset byte 24|40 are a sequence of SC SL-byte \hyperref[subheader-pointers]{subheader pointers}, which point to an offset farther down the page. \hyperref[sas7bdat-subheaders]{SAS7BDAT Subheaders} stored at these offsets hold meta information about the database, including the column names, labels, and types.
+If a page is of type 'mix', then \textbf{packed binary data begin at the next 8 byte boundary following the last subheader pointer}. In this case, the data begin at offset B+8+SC*SL+DL, where DL = (B+8+SC*SL+PL+7) \% 8 * 8, and '\%' is the modulo operator.
 
-If a page is of type 'data', then packed binary data begin at offset 24 / 40.
+If a page is of type 'data', then packed binary data begin at offset 24|40.
 
-The 'comp' page is page 2 of the compress\_yes.sas7bdat test file.  It has TDB and L fields, but no subheader pointers.  It contains some initial data and 2 tables.  The first table has many rows of length 24, purpose unknown.  The second table has one entry per data page with the page number and the number of data rows on the page for L pages.  It could be used to access a particular row without reading all preceding data pages.
+The 'comp' page was observed as page 2 of the compress\_yes.sas7bdat test file (not distributed with the \texttt{sas7bdat} package). It has BC and SC fields, but no subheader pointers. It contains some initial data and 2 tables. The first table has many rows of length 24; its purpose is unknown. The second table has one entry per data page with the page number and the number of data rows on the page for SC pages. It could be used to access a particular row without reading all preceding data pages.
 
 
 %___________________________________________________________________________
@@ -1111,10 +1117,10 @@ The 'comp' page is page 2 of the compress\_yes.sas7bdat test file.  It has TDB a
   \label{subheader-pointers}%
 }
 
-The \hyperref[subheader-pointers]{subheader pointers} encode information about the offset and length of subheaders relative to the beginning of the page where the subheader pointer is located. The purpose of the last four bytes of the subheader pointer are uncertain, but may indicate that additional subheader pointers are to be found on the next page, or that the corresponding subheader is not crucial.
+The subheader pointers encode information about the offset and length of subheaders relative to the beginning of the page where the subheader pointer is located. The purpose of the last four bytes of the subheader pointer are uncertain, but may indicate that additional subheader pointers are to be found on the next page, or that the corresponding subheader is not crucial.
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.098\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.668\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.098\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.633\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1145,7 +1151,7 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
@@ -1153,27 +1159,29 @@ int, offset from page start to subheader
  \\
 \hline
 
-4 / 8
+4|8
  & 
-4 / 8
+4|8
  & 
 high
  & 
-int, length of subheader := H
+int, length of subheader := %
+\phantomsection\label{ql}QL
  \\
 \hline
 
-8 / 16
+8|16
  & 
 1
  & 
 medium
  & 
-int, compression := COMP
+int, compression := %
+\phantomsection\label{comp}COMP
  \\
 \hline
 
-9 / 17
+9|17
  & 
 1
  & 
@@ -1183,9 +1191,9 @@ int, subheader type := ST
  \\
 \hline
 
-10 / 18
+10|18
  & 
-2 / 6
+2|6
  & 
 low
  & 
@@ -1193,22 +1201,22 @@ zeroes
  \\
 \hline
 
-12 / 24
+12|24
  &  & 
 high
  & 
-Total length of subheader pointer (24 for \textbf{u64}), LSHP
+Total length of subheader pointer 12|24 (\textbf{u64}), SL
  \\
 \hline
 \end{longtable*}
 
-H is sometimes zero, which indicates that no data is referenced by the corresponding subheader pointer. When this occurs, the subheader pointer may be ignored.
+QL is sometimes zero, which indicates that no data is referenced by the corresponding subheader pointer. When this occurs, the subheader pointer may be ignored.
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.063\DUtablewidth}|p{0.493\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.098\DUtablewidth}|p{0.493\DUtablewidth}|}
 \hline
 \textbf{%
-COMP
+\hyperref[comp]{COMP}
 } & \textbf{%
 description
 } \\
@@ -1216,7 +1224,7 @@ description
 \endfirsthead
 \hline
 \textbf{%
-COMP
+\hyperref[comp]{COMP}
 } & \textbf{%
 description
 } \\
@@ -1295,7 +1303,7 @@ all subheaders (including row data), in Compressed file.
   \label{sas7bdat-subheaders}%
 }
 
-Subheaders contain meta information regarding the SAS7BDAT database, including row and column counts, column names, labels, and types. Each subheader is associated with a four- or eight-byte 'signature' that identifies the subheader type, and hence, how it should be parsed.
+Subheaders contain meta information regarding the SAS7BDAT database, including row and column counts, column names, labels, and types. Each subheader is associated with a four- or eight-byte 'signature' (\textbf{u64}) that identifies the subheader type, and hence, how it should be parsed.
 
 
 %___________________________________________________________________________
@@ -1306,10 +1314,10 @@ Subheaders contain meta information regarding the SAS7BDAT database, including r
   \label{row-size-subheader}%
 }
 
-The \hyperref[row-size-subheader]{row size subheader} holds information about row length (in bytes), their total count, and their count on a page of type 'mix'.  Fields at offset 28 / 56 and higher are not actually needed to read the file, but they are documented in case something useful is discovered.  The 4 test files used for example data in the higher fields are eyecarex, acadindx, natlterr1994, txzips (non-Intel/Intel x regular/u64).
+The row size subheader holds information about row length (in bytes), their total count, and their count on a page of type 'mix'.  Fields at offset 28|56 and higher are not needed to read the file, but are documented here for completeness.  The four test files used for example data in the higher fields are \texttt{eyecarex.sas7bdat}, \texttt{acadindx.sas7bdat}, \texttt{natlterr1994.sas7bdat}, \texttt{txzips.sas7bdat} (non-Intel/Intel x regular/u64).
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.079\DUtablewidth}|p{0.079\DUtablewidth}|p{0.057\DUtablewidth}|p{0.736\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.076\DUtablewidth}|p{0.076\DUtablewidth}|p{0.055\DUtablewidth}|p{0.743\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1340,17 +1348,17 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
-binary, signature F7F7F7F7 (padded with 4 zero bytes on \textbf{u64})
+binary, signature xF7F7F7F7|xF7F7F7F700000000
  \\
 \hline
 
-4 / 8
+4|8
  & 
-16 / 32
+16|32
  & 
 low
  & 
@@ -1358,29 +1366,30 @@ low
  \\
 \hline
 
-20 / 40
+20|40
  & 
-4 / 8
+4|8
  & 
 high
  & 
-int, row length (in bytes) := ROWLENB
+int, row length (in bytes) := %
+\phantomsection\label{rl}RL
  \\
 \hline
 
-24 / 48
+24|48
  & 
-4 / 8
+4|8
  & 
 high
  & 
-int, row count := NROW
+int, total row count := TRC
  \\
 \hline
 
-28 / 56
+28|56
  & 
-8 / 16
+8|16
  & 
 low
  & 
@@ -1388,29 +1397,31 @@ low
  \\
 \hline
 
-36 / 72
+36|72
  & 
-4 / 8
- & 
-medium
- & 
-int, number of Column Format and Label subheaders on first page where they appear := NCFL1
- \\
-\hline
-
-40 / 80
- & 
-4 / 8
+4|8
  & 
 medium
  & 
-int, number of Column Format and Label subheaders on second page where they appear (or 0) := NCFL2
+int, number of \hyperref[column-format-and-label-subheader]{Column Format and Label Subheader} on first page where they appear := %
+\phantomsection\label{ncfl1}NCFL1
  \\
 \hline
 
-44 / 88
+40|80
  & 
-8 / 16
+4|8
+ & 
+medium
+ & 
+int, number of \hyperref[column-format-and-label-subheader]{Column Format and Label Subheader} on second page where they appear (or 0) := %
+\phantomsection\label{ncfl2}NCFL2
+ \\
+\hline
+
+44|88
+ & 
+8|16
  & 
 low
  & 
@@ -1418,19 +1429,19 @@ low
  \\
 \hline
 
-52 / 104
+52|104
  & 
-4 / 8
+4|8
  & 
 medium
  & 
-int, page size, equals PS
+int, page size, equals PL
  \\
 \hline
 
-56 / 112
+56|112
  & 
-4 / 8
+4|8
  & 
 low
  & 
@@ -1438,29 +1449,30 @@ low
  \\
 \hline
 
-60 / 120
+60|120
  & 
-4 / 8
- & 
-medium
- & 
-int, max row count on ``mix'' page := NRMIX
- \\
-\hline
-
-64 / 128
- & 
-8 / 16
+4|8
  & 
 medium
  & 
-sequence of 8 / 16 FF, end of initial header
+int, max row count on ``mix'' page := %
+\phantomsection\label{mrc}MRC
  \\
 \hline
 
-72 / 144
+64|128
  & 
-148 / 296
+8|16
+ & 
+medium
+ & 
+sequence of 8|16 FF, end of initial header
+ \\
+\hline
+
+72|144
+ & 
+148|296
  & 
 medium
  & 
@@ -1468,7 +1480,7 @@ zeroes
  \\
 \hline
 
-220 / 440
+220|440
  & 
 4
  & 
@@ -1478,9 +1490,9 @@ int, page sequence signature (equals current page sequence signature)
  \\
 \hline
 
-224 / 444
+224|444
  & 
-40 / 68
+40|68
  & 
 low
  & 
@@ -1488,9 +1500,9 @@ zeroes
  \\
 \hline
 
-264 / 512
+264|512
  & 
-4 / 8
+4|8
  & 
 low
  & 
@@ -1498,7 +1510,7 @@ int, value 1 observed in 4 test files
  \\
 \hline
 
-268 / 520
+268|520
  & 
 2
  & 
@@ -1508,19 +1520,19 @@ int, value 2 observed
  \\
 \hline
 
-270 / 522
+270|522
  & 
-2 / 6
+2|6
  & 
 low
  & 
-zeroes (pads length of 3 fields to 8 / 16)
+zeroes (pads length of 3 fields to 8|16)
  \\
 \hline
 
-272 / 528
+272|528
  & 
-4 / 8
+4|8
  & 
 medium
  & 
@@ -1528,7 +1540,7 @@ int, number of pages with subheader data := NPSHD
  \\
 \hline
 
-276 / 536
+276|536
  & 
 2
  & 
@@ -1538,9 +1550,9 @@ int, number of subheaders with positive length on last page with subheader data 
  \\
 \hline
 
-278 / 538
+278|538
  & 
-2 / 6
+2|6
  & 
 low
  & 
@@ -1548,9 +1560,9 @@ zeroes
  \\
 \hline
 
-280 / 544
+280|544
  & 
-4 / 8
+4|8
  & 
 low
  & 
@@ -1558,7 +1570,7 @@ int, values equal to NPSHD observed
  \\
 \hline
 
-284 / 552
+284|552
  & 
 2
  & 
@@ -1568,9 +1580,9 @@ int, values equal to NSHPL+2 observed
  \\
 \hline
 
-286 / 554
+286|554
  & 
-2 / 6
+2|6
  & 
 low
  & 
@@ -1578,9 +1590,9 @@ zeroes
  \\
 \hline
 
-288 / 560
+288|560
  & 
-4 / 8
+4|8
  & 
 medium
  & 
@@ -1588,7 +1600,7 @@ int, number of pages in file, equals PC
  \\
 \hline
 
-292 / 568
+292|568
  & 
 2
  & 
@@ -1598,9 +1610,9 @@ int, values 22,26,9,56 observed
  \\
 \hline
 
-294 / 570
+294|570
  & 
-2 / 6
+2|6
  & 
 low
  & 
@@ -1608,9 +1620,9 @@ zeroes
  \\
 \hline
 
-296 / 576
+296|576
  & 
-4 / 8
+4|8
  & 
 low
  & 
@@ -1618,19 +1630,19 @@ int, value 1 observed
  \\
 \hline
 
-300 / 584
+300|584
  & 
 2
  & 
 low
  & 
-int, values 7 / 8 observed
+int, values 7|8 observed
  \\
 \hline
 
-302 / 586
+302|586
  & 
-2 / 6
+2|6
  & 
 low
  & 
@@ -1638,9 +1650,9 @@ zeroes
  \\
 \hline
 
-304 / 592
+304|592
  & 
-40 / 80
+40|80
  & 
 low
  & 
@@ -1648,7 +1660,7 @@ zeroes
  \\
 \hline
 
-344 / 672
+344|672
  & 
 2
  & 
@@ -1658,17 +1670,17 @@ int, value 0
  \\
 \hline
 
-346 / 674
+346|674
  & 
 2
  & 
 low
  & 
-int, values 0 / 8
+int, values 0|8
  \\
 \hline
 
-348 / 676
+348|676
  & 
 2
  & 
@@ -1678,7 +1690,7 @@ int, value 4
  \\
 \hline
 
-350 / 678
+350|678
  & 
 2
  & 
@@ -1688,17 +1700,17 @@ int, value 0
  \\
 \hline
 
-352 / 680
+352|680
  & 
 2
  & 
 low
  & 
-int, values 12,32 / 0
+int, values 12,32|0
  \\
 \hline
 
-354 / 682
+354|682
  & 
 2
  & 
@@ -1708,7 +1720,7 @@ int, length of Creator Software string := LCS
  \\
 \hline
 
-356 / 684
+356|684
  & 
 2
  & 
@@ -1718,7 +1730,7 @@ int, value 0
  \\
 \hline
 
-358 / 686
+358|686
  & 
 2
  & 
@@ -1728,7 +1740,7 @@ int, value 20
  \\
 \hline
 
-360 / 688
+360|688
  & 
 2
  & 
@@ -1738,7 +1750,7 @@ int, value of 8 indicates MXNAM and MXLAB valid := IMAXN
  \\
 \hline
 
-362 / 690
+362|690
  & 
 8
  & 
@@ -1748,7 +1760,7 @@ zeroes
  \\
 \hline
 
-370 / 698
+370|698
  & 
 2
  & 
@@ -1758,7 +1770,7 @@ int, value 12
  \\
 \hline
 
-372 / 700
+372|700
  & 
 2
  & 
@@ -1768,7 +1780,7 @@ int, value 8
  \\
 \hline
 
-374 / 702
+374|702
  & 
 2
  & 
@@ -1778,7 +1790,7 @@ int, value 0
  \\
 \hline
 
-376 / 704
+376|704
  & 
 2
  & 
@@ -1788,7 +1800,7 @@ int, value 28
  \\
 \hline
 
-378 / 706
+378|706
  & 
 2
  & 
@@ -1798,7 +1810,7 @@ int, length of Creator PROC step name := LCP
  \\
 \hline
 
-380 / 708
+380|708
  & 
 36
  & 
@@ -1808,7 +1820,7 @@ zeroes
  \\
 \hline
 
-416 / 744
+416|744
  & 
 2
  & 
@@ -1818,7 +1830,7 @@ int, value 4
  \\
 \hline
 
-418 / 746
+418|746
  & 
 2
  & 
@@ -1828,17 +1840,18 @@ int, value 1
  \\
 \hline
 
-420 / 748
+420|748
  & 
 2
  & 
 low
  & 
-int, number of Column Text subheaders in file := NCT
+int, number of Column Text subheaders in file := %
+\phantomsection\label{nct}NCT
  \\
 \hline
 
-422 / 750
+422|750
  & 
 2
  & 
@@ -1848,7 +1861,7 @@ int, max length of column names := MXNAM (see IMAXN)
  \\
 \hline
 
-424 / 752
+424|752
  & 
 2
  & 
@@ -1858,7 +1871,7 @@ int, max length of column labels := MXLAB (see IMAXN)
  \\
 \hline
 
-426 / 754
+426|754
  & 
 12
  & 
@@ -1868,17 +1881,17 @@ zeroes
  \\
 \hline
 
-438 / 766
+438|766
  & 
 2
  & 
 medium
  & 
-int, number of data rows on a full page INT{[}(PS - 24 / 40)/ROWLENB{]}; 0 for compressed file
+int, number of data rows on a full page INT{[}(PL - 24 / 40)/\hyperref[rl]{RL}{]}; 0 for compressed file
  \\
 \hline
 
-440 / 768
+440|768
  & 
 27
  & 
@@ -1888,7 +1901,7 @@ zeroes
  \\
 \hline
 
-467 / 795
+467|795
  & 
 1
  & 
@@ -1898,7 +1911,7 @@ int, bit field, values 1,5
  \\
 \hline
 
-468 / 796
+468|796
  & 
 12
  & 
@@ -1908,11 +1921,11 @@ zeroes
  \\
 \hline
 
-480 / 808
+480|808
  &  & 
 medium
  & 
-Total length of subheader, H
+Total length of subheader, QL
  \\
 \hline
 \end{longtable*}
@@ -1929,7 +1942,7 @@ Total length of subheader, H
 The \hyperref[column-size-subheader]{column size subheader} holds the number of columns (variables).
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.091\DUtablewidth}|p{0.080\DUtablewidth}|p{0.080\DUtablewidth}|p{0.700\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.098\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.540\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -1960,17 +1973,17 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
-binary, signature F6F6F6F6 (padded with 4 zero bytes on \textbf{u64})
+binary, signature xF6F6F6F6|xF6F6F6F600000000
  \\
 \hline
 
-4 / 8
+4|8
  & 
-4 / 8
+4|8
  & 
 high
  & 
@@ -1978,9 +1991,9 @@ int, number of columns := NCOL
  \\
 \hline
 
-8 / 16
+8|16
  & 
-4 / 8
+4|8
  & 
 low
  & 
@@ -1988,11 +2001,11 @@ low
  \\
 \hline
 
-12 / 24
+12|24
  &  & 
 medium
  & 
-Total length of subheader, H
+Total length of subheader, QL
  \\
 \hline
 \end{longtable*}
@@ -2006,10 +2019,10 @@ Total length of subheader, H
   \label{subheader-counts-subheader}%
 }
 
-This subheader contains information on the first and last appearances of at least 7 common subheader types. Any of these subheaders may appear once or more. Multiple instances of a subheader provide information for an exclusive subset of columns. The order in which data is read from multiple subheaders corresponds to the reading order (left to right) of columns.  The structure of this subheader was deduced and reported by Clint Cummins.
+This subheader contains information on the first and last appearances of at least 7 common subheader types. Any of these subheaders may appear once or more. Multiple instances of a subheader provide information for an exclusive subset of columns. The order in which data is read from multiple subheaders corresponds to the reading order (left to right) of columns. The structure of this subheader was deduced and reported by Clint Cummins.
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.117\DUtablewidth}|p{0.095\DUtablewidth}|p{0.083\DUtablewidth}|p{0.655\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.108\DUtablewidth}|p{0.088\DUtablewidth}|p{0.077\DUtablewidth}|p{0.677\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -2040,17 +2053,17 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
-int, signature -1024 (hex 00FC \& 2 or 6 FFs on Intel)
+int, signature -1024 (x00FCFFFF|x00FCFFFFFFFFFFFF)
  \\
 \hline
 
-4 / 8
+4|8
  & 
-4 / 8
+4|8
  & 
 low
  & 
@@ -2058,9 +2071,9 @@ int, length or offset, usually >= 48
  \\
 \hline
 
-8 / 16
+8|16
  & 
-4 / 8
+4|8
  & 
 low
  & 
@@ -2068,7 +2081,7 @@ int, usually 4
  \\
 \hline
 
-12 / 24
+12|24
  & 
 2
  & 
@@ -2078,9 +2091,9 @@ int, usually 7 (number of nonzero SCVs?)
  \\
 \hline
 
-14 / 26
+14|26
  & 
-50 / 94
+50|94
  & 
 low
  & 
@@ -2088,21 +2101,21 @@ low
  \\
 \hline
 
-64 / 120
+64|120
  & 
 12*LSCV
  & 
 medium
  & 
-12 \hyperref[subheader-count-vectors]{subheader count vectors}, 20 / 40 := LSCV bytes each
+12 \hyperref[subheader-count-vectors]{subheader count vectors}, length := LSCV = 20|40 bytes each
  \\
 \hline
 
-304 / 600
+304|600
  &  & 
 medium
  & 
-Total length of subheader, H
+Total length of subheader, QL
  \\
 \hline
 \end{longtable*}
@@ -2150,7 +2163,7 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
@@ -2158,9 +2171,9 @@ int, signature (see list below)
  \\
 \hline
 
-4 / 8
+4|8
  & 
-4 / 8
+4|8
  & 
 medium
  & 
@@ -2168,7 +2181,7 @@ int, page where this subheader first appears := PAGE1
  \\
 \hline
 
-8 / 16
+8|16
  & 
 2
  & 
@@ -2178,9 +2191,9 @@ int, position of subheader pointer in PAGE1 := LOC1
  \\
 \hline
 
-10 / 18
+10|18
  & 
-2 / 6
+2|6
  & 
 low
  & 
@@ -2188,9 +2201,9 @@ low
  \\
 \hline
 
-12 / 24
+12|24
  & 
-4 / 8
+4|8
  & 
 medium
  & 
@@ -2198,7 +2211,7 @@ int, page where this subheader last appears := PAGEL
  \\
 \hline
 
-16 / 32
+16|32
  & 
 2
  & 
@@ -2208,9 +2221,9 @@ int, position of subheader pointer in PAGEL := LOCL
  \\
 \hline
 
-18 / 34
+18|34
  & 
-2 / 6
+2|6
  & 
 low
  & 
@@ -2218,7 +2231,7 @@ low
  \\
 \hline
 
-20 / 40
+20|40
  &  & 
 medium
  & 
@@ -2227,7 +2240,7 @@ Total length of subheader count vector, LSCV
 \hline
 \end{longtable*}
 
-The LOC1 and LOCL give the positions of the corresponding subheader pointer in PAGE1 and PAGEL, respectively. That is, if there are L subheader pointers on page PAGE1, then the corresponding subheader pointer first occurs at the LOC1'th position in this array, enumerating from 1. If PAGE1=0, the subheader is not present. If PAGE1=PAGEL and LOC1=LOCL, the subheader appears exactly once. If PAGE1!=PAGEL or LOC1!=LOCL, the subheader appears 2 or more times. In all test files, PAGE1 <= PAGEL, and the corresponding subheaders appear only once per page.  The variable NCT in the \hyperref[row-size-subheader]{Row Size subheader} should be used to insure that all Column Text subheaders are located (and to avoid scanning through all pages in the file when all subheaders are already located).
+The LOC1 and LOCL give the positions of the corresponding subheader pointer in PAGE1 and PAGEL, respectively. That is, if there are SC subheader pointers on page PAGE1, then the corresponding subheader pointer first occurs at the LOC1'th position in this array, enumerating from 1. If PAGE1=0, the subheader is not present. If PAGE1=PAGEL and LOC1=LOCL, the subheader appears exactly once. If PAGE1!=PAGEL or LOC1!=LOCL, the subheader appears 2 or more times. In all test files, PAGE1 <= PAGEL, and the corresponding subheaders appear only once per page.  The variable \hyperref[nct]{NCT} in the \hyperref[row-size-subheader]{Row Size Subheader} should be used to ensure that all Column Text subheaders are located (and to avoid scanning through all pages in the file when all subheaders are already located).
 
 The first 7 binary signatures in the \hyperref[subheader-count-vectors]{Subheader Count Vectors} array are always:
 
@@ -2298,7 +2311,7 @@ unknown signature \#3
 
 The remaining 5 out of 12 signatures are zeros in the observed source files. Presumably, these are for subheaders not yet defined, or not present in the collection of test files.
 
-Column Format and Label subheaders may appear on multiple pages, but are not indexed in Subheader Counts.  The variables NCFL1 and NCFL2 in the \hyperref[row-size-subheader]{Row Size subheader} may be helpful if you want to know in advance if these appear across multiple pages.
+A \hyperref[column-format-and-label-subheader]{Column Format and Label Subheader} may appear on multiple pages, but are not indexed in Subheader Counts. The variables NCFL1 and NCFL2 in the \hyperref[row-size-subheader]{Row Size subheader} may be helpful if you want to know in advance if these appear across multiple pages.
 
 
 %___________________________________________________________________________
@@ -2343,25 +2356,25 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
-int, signature -3 (hex FD \& 3 or 7 FFs)
+int, signature -3 (xFDFFFFFF|xFDFFFFFFFFFFFFFF)
  \\
 \hline
 
-4 / 8
+4|8
  & 
 2
  & 
 medium
  & 
-int, size of text block (H - 16 / 20)
+int, size of text block (QL - 16|20)
  \\
 \hline
 
-6 / 10
+6|10
  & 
 2
  & 
@@ -2371,7 +2384,7 @@ low
  \\
 \hline
 
-8 / 12
+8|12
  & 
 2
  & 
@@ -2381,7 +2394,7 @@ low
  \\
 \hline
 
-10 / 14
+10|14
  & 
 2
  & 
@@ -2391,7 +2404,7 @@ low
  \\
 \hline
 
-12 / 16
+12|16
  & 
 2
  & 
@@ -2401,7 +2414,7 @@ low
  \\
 \hline
 
-14 / 18
+14|18
  & 
 2
  & 
@@ -2411,7 +2424,7 @@ low
  \\
 \hline
 
-16 / 20
+16|20
  & 
 varies
  & 
@@ -2423,7 +2436,7 @@ ascii, compression \& Creator PROC step name that generated data
 
 varies
  & 
-\%H
+\%QL
  & 
 high
  & 
@@ -2434,7 +2447,7 @@ ascii, combined column names, labels, formats
 
 This subheader sometimes appears more than once; each is a separate array. If so, the ``column name index'' field in \hyperref[column-name-pointers]{column name pointers} selects a particular text array - 0 for the first array, 1 for the second, etc. Similarly, ``column format index'' and ``column label index'' fields also select a text array. Offsets to strings within the text array are multiples of 4, so the column names and labels section of the array often contains many nulls for padding.
 
-The variables LCS and LCP from the \hyperref[row-size-subheader]{Row Size subheader} refer to a text field at the start of the text array (at offset 16 / 20) in the first Column Text subheader (before the column name strings).  This text field also contains compression information.  The following logic decodes this initial field:
+The variables LCS and LCP from the \hyperref[row-size-subheader]{Row Size subheader} refer to a text field at the start of the text array (at offset 16|20) in the first Column Text subheader (before the column name strings).  This text field also contains compression information.  The following logic decodes this initial field:
 \setcounter{listcnt0}{0}
 \begin{list}{\arabic{listcnt0}.}
 {
@@ -2463,7 +2476,7 @@ The variables LCS and LCP from the \hyperref[row-size-subheader]{Row Size subhea
 Column name subheaders contain a sequence of \hyperref[column-name-pointers]{column name pointers} to the offset of each column name \textbf{relative to a} \hyperref[column-text-subheader]{column text subheader}. There may be multiple column name subheaders, indexing into multiple column text subheaders.
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.098\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.633\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.098\DUtablewidth}|p{0.086\DUtablewidth}|p{0.086\DUtablewidth}|p{0.644\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -2494,25 +2507,25 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
-int, signature -1 (hex 4 or 8 FFs)
+int, signature -1 (xFFFFFFFF|xFFFFFFFFFFFFFFFF)
  \\
 \hline
 
-4 / 8
+4|8
  & 
 2
  & 
 medium
  & 
-int, length of remaining subheader (H - 16 / 20)
+int, length of remaining subheader (QL - 16|20)
  \\
 \hline
 
-6 / 10
+6|10
  & 
 2
  & 
@@ -2522,7 +2535,7 @@ low
  \\
 \hline
 
-8 / 12
+8|12
  & 
 2
  & 
@@ -2532,7 +2545,7 @@ low
  \\
 \hline
 
-10 / 14
+10|14
  & 
 2
  & 
@@ -2542,23 +2555,23 @@ low
  \\
 \hline
 
-12 / 16
+12|16
  & 
 8*CMAX
  & 
 medium
  & 
-\hyperref[column-name-pointers]{column name pointers} (see below), CMAX=(H-20/28)/8
+\hyperref[column-name-pointers]{column name pointers} (see below), CMAX=(QL-20|28)/8
  \\
 \hline
 
 MCN
  & 
-8 / 12
+8|12
  & 
 low
  & 
-zeros, 12 / 16 + 8*CMAX := MCN
+zeros, 12|16 + 8*CMAX := MCN
  \\
 \hline
 \end{longtable*}
@@ -2665,7 +2678,7 @@ Total length of column name pointer
 The column attribute subheader holds information regarding the column offsets within a data row, the column widths, and the column types (either numeric or character). The column attribute subheader sometimes occurs more than once (in test data). In these cases, column attributes are applied in the order they are parsed.
 
 \setlength{\DUtablewidth}{\linewidth}
-\begin{longtable*}[c]{|p{0.077\DUtablewidth}|p{0.095\DUtablewidth}|p{0.068\DUtablewidth}|p{0.709\DUtablewidth}|}
+\begin{longtable*}[c]{|p{0.080\DUtablewidth}|p{0.099\DUtablewidth}|p{0.071\DUtablewidth}|p{0.700\DUtablewidth}|}
 \hline
 \textbf{%
 offset
@@ -2696,15 +2709,15 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
-int, signature -4 (hex FC \& 3 or 7 FFs)
+int, signature -4 (hex xFCFFFFFF|FCFFFFFFFFFFFFFF)
  \\
 \hline
 
-4 / 8
+4|8
  & 
 2
  & 
@@ -2714,7 +2727,7 @@ int, length of remaining subheader
  \\
 \hline
 
-6 / 10
+6|10
  & 
 2
  & 
@@ -2724,7 +2737,7 @@ low
  \\
 \hline
 
-8 / 12
+8|12
  & 
 2
  & 
@@ -2734,7 +2747,7 @@ low
  \\
 \hline
 
-10 / 14
+10|14
  & 
 2
  & 
@@ -2744,23 +2757,23 @@ low
  \\
 \hline
 
-12 / 16
+12|16
  & 
 LCAV*CMAX
  & 
 high
  & 
-\hyperref[column-attribute-vectors]{column attribute vectors} (see below), CMAX=(H-20/28)/LCAV, 12 / 16 := LCAV
+\hyperref[column-attribute-vectors]{column attribute vectors} (see below), CMAX=(QL-20|28)/LCAV, LCAV=12|16
  \\
 \hline
 
 MCA
  & 
-8 / 12
+8|12
  & 
 low
  & 
-MCA = 12 / 16 + LCAV*CMAX
+MCA = 12|16 + LCAV*CMAX
  \\
 \hline
 \end{longtable*}
@@ -2806,7 +2819,7 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
@@ -2814,7 +2827,7 @@ int, column offset in data row (in bytes)
  \\
 \hline
 
-4 / 8
+4|8
  & 
 4
  & 
@@ -2824,7 +2837,7 @@ int, column width
  \\
 \hline
 
-8 / 12
+8|12
  & 
 2
  & 
@@ -2834,7 +2847,7 @@ name length flag
  \\
 \hline
 
-10 / 14
+10|14
  & 
 1
  & 
@@ -2844,7 +2857,7 @@ int, column type (1 = numeric, 2 = character)
  \\
 \hline
 
-11 / 15
+11|15
  & 
 1
  & 
@@ -2854,7 +2867,7 @@ low
  \\
 \hline
 
-12 / 16
+12|16
  &  & 
 high
  & 
@@ -2955,7 +2968,7 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
@@ -2963,9 +2976,9 @@ int, signature -1026 (hex FEFB \& 2 or 6 FFs)
  \\
 \hline
 
-4 / 8
+4|8
  & 
-30 / 38
+30|38
  & 
 low
  & 
@@ -2973,7 +2986,7 @@ low
  \\
 \hline
 
-34 / 46
+34|46
  & 
 2
  & 
@@ -2983,7 +2996,7 @@ int, column format index to select \hyperref[column-text-subheader]{Column Text 
  \\
 \hline
 
-36 / 48
+36|48
  & 
 2
  & 
@@ -2993,7 +3006,7 @@ int, column format offset w.r.t. end of selected Column Text signature.  A multi
  \\
 \hline
 
-38 / 50
+38|50
  & 
 2
  & 
@@ -3003,7 +3016,7 @@ int, column format length
  \\
 \hline
 
-40 / 52
+40|52
  & 
 2
  & 
@@ -3013,7 +3026,7 @@ int, column label index to select \hyperref[column-text-subheader]{Column Text S
  \\
 \hline
 
-42 / 54
+42|54
  & 
 2
  & 
@@ -3023,7 +3036,7 @@ int, column label offset w.r.t. end of selected Column Text signature.  A multip
  \\
 \hline
 
-44 / 56
+44|56
  & 
 2
  & 
@@ -3033,7 +3046,7 @@ int, column label length
  \\
 \hline
 
-46 / 58
+46|58
  & 
 6
  & 
@@ -3043,11 +3056,11 @@ low
  \\
 \hline
 
-52 / 64
+52|64
  &  & 
 medium
  & 
-Total length of subheader, H
+Total length of subheader, QL
  \\
 \hline
 \end{longtable*}
@@ -3095,7 +3108,7 @@ description
 
 0
  & 
-4 / 8
+4|8
  & 
 high
  & 
@@ -3103,7 +3116,7 @@ int, signature -2 (hex FE \& 3 or 7 FFs)
  \\
 \hline
 
-4 / 8
+4|8
  & 
 2
  & 
@@ -3113,7 +3126,7 @@ int, value close to offset in subheader pointer
  \\
 \hline
 
-6 / 10
+6|10
  & 
 6
  & 
@@ -3123,9 +3136,9 @@ low
  \\
 \hline
 
-12 / 16
+12|16
  & 
-4 / 8
+4|8
  & 
 medium
  & 
@@ -3133,7 +3146,7 @@ int, length of remaining subheader
  \\
 \hline
 
-16 / 24
+16|24
  & 
 2
  & 
@@ -3143,7 +3156,7 @@ int, usually equals NCOL
  \\
 \hline
 
-18 / 26
+18|26
  & 
 2
  & 
@@ -3153,7 +3166,7 @@ int, length of column list := CL, usually CL > NCOL
  \\
 \hline
 
-20 / 28
+20|28
  & 
 2
  & 
@@ -3163,7 +3176,7 @@ int, usually 1
  \\
 \hline
 
-22 / 30
+22|30
  & 
 2
  & 
@@ -3173,7 +3186,7 @@ int, usually equals NCOL
  \\
 \hline
 
-24 / 32
+24|32
  & 
 2
  & 
@@ -3183,7 +3196,7 @@ int, usually 3 equal values
  \\
 \hline
 
-26 / 34
+26|34
  & 
 2
  & 
@@ -3193,7 +3206,7 @@ int, usually 3 equal values
  \\
 \hline
 
-28 / 36
+28|36
  & 
 2
  & 
@@ -3203,7 +3216,7 @@ int, usually 3 equal values
  \\
 \hline
 
-30 / 38
+30|38
  & 
 2*CL
  & 
@@ -3219,7 +3232,7 @@ MCL
  & 
 low
  & 
-usually zeros, 30 / 38 + 2*CL := MCL
+usually zeros, 30|38 + 2*CL := MCL
  \\
 \hline
 \end{longtable*}
@@ -4003,7 +4016,7 @@ Another software implementation was made by Clint Cummins, in the TSP econometri
 
 \item look for data which will reliably distinguish between structural subheaders (which have one of the known signatures) and uncompressed row data, which may have row data in the signature position that matches one of the known signatures.  Both use COMP=0.  Are NPSHD and NSHPL sufficient to do this?
 
-\item obtain test files with more than 2.1 billion (and more than 4.2 billion) data rows, i.e. where 8 byte integer NROW in \textbf{u64} is apparently needed.  Do the non-u64 files handle this, with additional fields beyond the 4 byte NROW used for segmentation?  Is NROW a (signed) int or (unsigned) uint?
+\item obtain test files with more than 2.1 billion (and more than 4.2 billion) data rows, i.e. where 8 byte integer TRC in \textbf{u64} is apparently needed.  Do the non-u64 files handle this, with additional fields beyond the 4 byte TRC used for segmentation?  Is TRC a (signed) int or (unsigned) uint?
 
 \item identify any SAS7BDAT encryption flag (this is not the same as 'cracking', or breaking encryption); we just identify if a file is encrypted and not readable without a key
 
@@ -4011,7 +4024,7 @@ Another software implementation was made by Clint Cummins, in the TSP econometri
 
 \item consider header bytes -by- SAS\_host
 
-\item check that only one page of type ``mix'' is observed. If so insert ``In all test cases (\texttt{data/sources.csv}), there are exactly zero or one pages of type 'mix'.'' under the \hyperref[page-offset-table]{Page Offset Table} header.   {[}May not be needed, because the TDB and L fields in each Page Offset Table make the NRMIX field in the initial header unnecessary.{]}
+\item check that only one page of type ``mix'' is observed. If so insert ``In all test cases (\texttt{data/sources.csv}), there are exactly zero or one pages of type 'mix'.'' under the \hyperref[page-offset-table]{Page Offset Table} header.   {[}May not be needed, because the BC and SC fields in each Page Offset Table make the \hyperref[mrc]{MRC} field in the initial header unnecessary.{]}
 
 \item identify all missing value representations: missing numeric values appear to be represented as '0000000000D1FFFF' (nan) for numeric 'double' quantities.
 

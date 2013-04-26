@@ -273,8 +273,8 @@ offset		length		conf.	description
 20|40		4|8		high	int, row length (in bytes) := _`RL`
 24|48		4|8		high	int, total row count := TRC 
 28|56		8|16		low	*????????????*
-36|72		4|8		medium	int, number of `Column Format and Label Subheaders`_ on first page where they appear := _`NCFL1`
-40|80		4|8		medium	int, number of `Column Format and Label Subheaders`_ on second page where they appear (or 0) := _`NCFL2`
+36|72		4|8		medium	int, number of `Column Format and Label Subheader`_ on first page where they appear := _`NCFL1`
+40|80		4|8		medium	int, number of `Column Format and Label Subheader`_ on second page where they appear (or 0) := _`NCFL2`
 44|88		8|16		low	*????????????*
 52|104		4|8		medium	int, page size, equals PL
 56|112		4|8		low	*????????????*
@@ -398,7 +398,7 @@ signature	description
 
 The remaining 5 out of 12 signatures are zeros in the observed source files. Presumably, these are for subheaders not yet defined, or not present in the collection of test files. 
 
-`Column Format and Label Subheaders`_ may appear on multiple pages, but are not indexed in Subheader Counts. The variables NCFL1 and NCFL2 in the `Row Size subheader`_ may be helpful if you want to know in advance if these appear across multiple pages.
+A `Column Format and Label Subheader`_ may appear on multiple pages, but are not indexed in Subheader Counts. The variables NCFL1 and NCFL2 in the `Row Size subheader`_ may be helpful if you want to know in advance if these appear across multiple pages.
 
 
 Column Text Subheader
