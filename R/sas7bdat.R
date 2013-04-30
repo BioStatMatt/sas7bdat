@@ -386,8 +386,8 @@ read.sas7bdat <- function(file, debug=FALSE) {
     # SAS_host is a 16 byte field, but only the first eight are used
     # FIXME: It would be preferable to eliminate this check
     SAS_host    <- read_str(header, 224 + align1 + align2, 8)
-    if(!(SAS_host %in% KNOWNHOST))
-        stop(paste("unknown host", SAS_host, BUGREPORT))
+    #if(!(SAS_host %in% KNOWNHOST))
+    #    stop(paste("unknown host", SAS_host, BUGREPORT))
 
     OS_version  <- read_str(header, 240 + align1 + align2, 16) 
     OS_maker    <- read_str(header, 256 + align1 + align2, 16) 
