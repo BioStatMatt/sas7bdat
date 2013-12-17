@@ -1,5 +1,5 @@
 This package contains documents and software related to a compatibility study of the SAS7BDAT database file format. The 'data/sas7bdat.sources.RData' references a collection of SAS7BDAT database files freely avalilable from internet resources. The data are not redistributed due to licensing concerns. Files in the collection are used for testing and investigating the SAS7BDAT file format. 
  
-Files in the inst/doc/ directory document various aspects of the compatibility study, including a detailed description of the binary structure of SAS7BDAT formatted databases. Files in the doc/ directory with the '.rst' extension are human-readable plain text files, but use the reStructuredText (http://docutils.sourceforge.net/rst.html) strategy to format tables, paragraphs, et cetera.
+The included vignette documents various aspects of the compatibility study, including a detailed description of the binary structure of SAS7BDAT formatted databases. 
   
 The R/ directory contains R (www.r-project.org) code implementing a prototype SAS7BDAT file reader.
