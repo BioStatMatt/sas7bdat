@@ -115,7 +115,7 @@ update.sas7bdat.sources <- function(ss) {
 }
     
 VERSION   <- "0.4"
-BUGREPORT <- "please report bugs to sas7bdatRbugs@gmail.com"
+BUGREPORT <- "please report bugs to maintainer"
 CAUTION   <- "please verify data correctness"
 
 # Host systems known to work
