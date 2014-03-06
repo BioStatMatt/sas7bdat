@@ -302,7 +302,7 @@ splice_col_attr_subheaders <- function(col_attr) {
     return(list(raw=raw))
 }
 
-read.sas7bdat <- function(file) {
+read.sas7bdat <- function(file, debug=FALSE) {
     if(inherits(file, "connection") && isOpen(file, "read")) {
         con <- file
         close_con <- FALSE
@@ -563,7 +563,7 @@ read.sas7bdat <- function(file) {
     attr(data, 'OS.name')       <- OS_name
     attr(data, 'endian')        <- endian
     attr(data, 'winunix')       <- winunix
-    #attr(data, 'pages')     <- pages
-    #attr(data, 'subhs')     <- subhs
+    if(debug)
+        attr(data, 'debug')     <- sys.frame(1)
     return(data)
 }
