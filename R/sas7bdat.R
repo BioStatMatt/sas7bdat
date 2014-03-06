@@ -260,7 +260,6 @@ splice_col_attr_subheaders <- function(col_attr) {
 }
 
 read.sas7bdat <- function(file) {
-    require('chron')
     if(inherits(file, "connection") && isOpen(file, "read")) {
         con <- file
         close_con <- FALSE
