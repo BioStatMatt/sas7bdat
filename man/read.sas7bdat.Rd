@@ -7,10 +7,11 @@ SAS Database Reader (experimental)
 Read SAS files in the sas7bdat data format.
 }
 \usage{
-read.sas7bdat(file)
+read.sas7bdat(file, debug=FALSE)
 }
 \arguments{
-  \item{file}{Path to a file or an URL.}
+  \item{file}{character: Path to a file or an URL.}
+  \item{debug}{logical: Save function environment as attribute of returned object.}
 }
 \section{Warning}{
 The functionality in this package is EXPERIMENTAL. Use at your own risk. For the latest details, see the \sQuote{sas7bdat} vignette (\emph{i.e.}, \code{vignette('sas7bdat')}). 
@@ -33,5 +34,5 @@ Matt Shotwell
 }
 
 \examples{
-# read.sas7bdat("http://bus.utk.edu/stat/stat579/hotel.sas7bdat")
+# read.sas7bdat("http://www.cdc.gov/nchs/tutorials/Dietary/Downloads/osteo_analysis_data.sas7bdat")
 }

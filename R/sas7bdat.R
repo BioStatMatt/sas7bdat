@@ -1,4 +1,4 @@
-#    Copyright (C) 2013 Matt Shotwell, VUMC
+#    Copyright (C) 2014 Matt Shotwell, VUMC
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,12 +17,14 @@
 # Download all files listed in sas7bdat.sources
 # path - where to save files
 # max.size - limit on the size of downloaded files (bytes)
-download.sas7bdat.sources <- function(ss, path=normalizePath("."), max.size=2^20) {
+download.sas7bdat.sources <-
+  function(ss, path=normalizePath("."), max.size=2^20) {
     # don't download zip files or files larger than max.size
     ss <- subset(ss, !grepl(".zip$", ss$url) & ss$uncompressed < max.size)
     if(!file.exists(path))
         dir.create(path)
-    apply(ss, 1, function(r) download.file(r["url"], file.path(path, r["filename"])))
+    apply(ss, 1, function(r)
+      download.file(r["url"], file.path(path, r["filename"])))
 }
 
 # Compress a file on disk
@@ -114,7 +116,7 @@ update.sas7bdat.sources <- function(ss) {
     return(ss)
 }
     
-VERSION   <- "0.4"
+VERSION   <- "0.5"
 BUGREPORT <- "please report bugs to maintainer"
 CAUTION   <- "please verify data correctness"
 
@@ -518,6 +520,7 @@ read.sas7bdat <- function(file, debug=FALSE) {
             row_count_p <- row_count_fp
             # skip subheader pointers
             base <- base + page$subh_count * if(u64) 24 else 12
+            base <- base + base %% 8
         } else {
             row_count_p <- read_int(page$data, if(u64) 34 else 18, 2)
         }
@@ -553,6 +556,7 @@ read.sas7bdat <- function(file, debug=FALSE) {
         close(con)
 
     data <- as.data.frame(data)
+    attr(data, 'pkg.version')   <- VERSION
     attr(data, 'column.info')   <- col_info
     attr(data, 'date.created')  <- datecreated
     attr(data, 'date.modified') <- datemodified
