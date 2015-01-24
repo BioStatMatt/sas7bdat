@@ -304,7 +304,7 @@ splice_col_attr_subheaders <- function(col_attr) {
     return(list(raw=raw))
 }
 
-read.sas7bdat <- function(file, debug=FALSE) {
+read.sas7bdat <- function(file, encoding="", debug=FALSE) {
     if(inherits(file, "connection") && isOpen(file, "read")) {
         con <- file
         close_con <- FALSE
@@ -538,10 +538,12 @@ read.sas7bdat <- function(file, debug=FALSE) {
                         col$length <- 8
                     }
                     data[[col$name]][row] <- readBin(raw, col$type, 1, col$length)
-                    # Strip beginning and trailing spaces
-                    if(col$type == "character")
+                    if(col$type == "character") {
+                        # Apply encoding
+                        Encoding(data[[col$name]][row]) <- char.encoding
+                        # Strip beginning and trailing spaces
                         data[[col$name]][row] <- gsub('^ +| +$', '', data[[col$name]][row])
-
+                    }
                 }
             }
             base <- base + row_length

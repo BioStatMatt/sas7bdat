@@ -7,10 +7,11 @@ SAS Database Reader (experimental)
 Read SAS files in the sas7bdat data format.
 }
 \usage{
-read.sas7bdat(file, debug=FALSE)
+read.sas7bdat(file, encoding="", debug=FALSE)
 }
 \arguments{
   \item{file}{character: Path to a file or an URL.}
+  \item{encoding}{character: Character encoding for strings}
   \item{debug}{logical: Save function environment as attribute of returned object.}
 }
 \section{Warning}{
