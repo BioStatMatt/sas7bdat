@@ -529,7 +529,7 @@ read.sas7bdat <- function(file, encoding="", debug=FALSE) {
                     data[[col$name]][row] <- readBin(raw, col$type, 1, col$length)
                     if(col$type == "character") {
                         # Apply encoding
-                        Encoding(data[[col$name]][row]) <- char.encoding
+                        Encoding(data[[col$name]][row]) <- encoding
                         # Strip beginning and trailing spaces
                         data[[col$name]][row] <- gsub('^ +| +$', '', data[[col$name]][row])
                     }
