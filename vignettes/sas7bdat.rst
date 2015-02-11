@@ -82,7 +82,9 @@ offset		length	conf.	description
 40		8	low	*????????????*
 48		8	low	*????????????*
 56		8	low	repeat of 32:32+8
-64		20	low	*????????????*
+64		6	low	*????????????*
+70		2	low	int, `Character Encoding`_
+72		12	low	*????????????*
 84		8	high	ascii 'SAS FILE'
 92		64	high	ascii, dataset name
 156		8	medium	ascii, file type, e.g. ``'DATA    '``
@@ -170,6 +172,26 @@ In all test files except one (not listed in ``data/sas7bdat.sources.RData``), th
    x00 x00 x00 x00   x18 x1f x10 x11
 
 In addition, the anomalous file is associated with the SAS release "3.2TK". Indeed, this file may not have been written by SAS. Otherwise, the anomalous file appears to be formatted similarly to other test files.
+
+Character Encoding
+++++++++++++++++++
+
+The integer (one or two bytes) at header offset 70 (bytes) indicates the character encoding of string data. The table below lists the values that are known to occur and the associated character encoding. 
+
+==============	============
+bytes 70-72	Encoding
+==============	============
+0          	WINDOWS-1252
+20		UTF-8
+28		US-ASCII
+29		ISO-8859-1
+30		ISO-8859-2
+31		ISO-8859-3
+40		ISO-8859-9
+60		WINDOWS-1250
+62		WINDOWS-1252
+125		GB18030
+==============	============
 
 
 SAS7BDAT Pages
