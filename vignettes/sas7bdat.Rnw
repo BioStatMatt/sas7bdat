@@ -320,7 +320,27 @@ repeat of 32:32+8
 
 64
  & 
-20
+6
+ & 
+low
+ & 
+\emph{????????????}
+ \\
+\hline
+
+70
+ & 
+2
+ & 
+low
+ & 
+int, \hyperref[character-encoding]{Character Encoding}
+ \\
+\hline
+
+72
+ & 
+12
  & 
 low
  & 
@@ -827,6 +847,100 @@ x00~x00~x00~x00~~~x18~x1f~x10~x11
 \end{quote}
 
 In addition, the anomalous file is associated with the SAS release ``3.2TK''. Indeed, this file may not have been written by SAS. Otherwise, the anomalous file appears to be formatted similarly to other test files.
+
+
+%___________________________________________________________________________
+
+\subsubsection*{\phantomsection%
+  Character Encoding%
+  \addcontentsline{toc}{subsubsection}{Character Encoding}%
+  \label{character-encoding}%
+}
+
+The integer (one or two bytes) at header offset 70 (bytes) indicates the character encoding of string data. The table below lists the values that are known to occur and the associated character encoding.
+
+\setlength{\DUtablewidth}{\linewidth}
+\begin{longtable*}[c]{|p{0.179\DUtablewidth}|p{0.156\DUtablewidth}|}
+\hline
+\textbf{%
+bytes 70-72
+} & \textbf{%
+Encoding
+} \\
+\hline
+\endfirsthead
+\hline
+\textbf{%
+bytes 70-72
+} & \textbf{%
+Encoding
+} \\
+\hline
+\endhead
+\multicolumn{2}{c}{\hfill ... continued on next page} \\
+\endfoot
+\endlastfoot
+
+0
+ & 
+WINDOWS-1252
+ \\
+\hline
+
+20
+ & 
+UTF-8
+ \\
+\hline
+
+28
+ & 
+US-ASCII
+ \\
+\hline
+
+29
+ & 
+ISO-8859-1
+ \\
+\hline
+
+30
+ & 
+ISO-8859-2
+ \\
+\hline
+
+31
+ & 
+ISO-8859-3
+ \\
+\hline
+
+40
+ & 
+ISO-8859-9
+ \\
+\hline
+
+60
+ & 
+WINDOWS-1250
+ \\
+\hline
+
+62
+ & 
+WINDOWS-1252
+ \\
+\hline
+
+125
+ & 
+GB18030
+ \\
+\hline
+\end{longtable*}
 
 
 %___________________________________________________________________________
