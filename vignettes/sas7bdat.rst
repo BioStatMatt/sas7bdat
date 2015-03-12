@@ -92,7 +92,7 @@ offset		length	conf.	description
 164+a1		8	high	double, timestamp, date created, secs since 1/1/60 (for SAS version 8.x and higher)
 172+a1		8	high	double, timestamp, date modified, secs since 1/1/60 (for SAS version 8.x and higher)
 180+a1		16	low	*????????????*
-196+a1		4	high	int, length of SAS7BDAT header := HL .  (1024 or 8192)
+196+a1		4	high	int, length of SAS7BDAT header := HL 
 200+a1		4	high	int, page size := _`PL`
 204+a1		4+a2	high	int, page count := PC .  Length 4 or 8 (**u64**), henceforth denoted **4|8**
 208+a1+a2	8	low	*????????????*
