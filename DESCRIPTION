@@ -1,14 +1,15 @@
 Package: sas7bdat
 Type: Package
-Title: SAS Database Reader (experimental)
-Version: 0.5
-Date: 2014-04-20
-Author@R: c(person("Matt", "Shotwell", role=c("aut", "cre"),
+Title: sas7bdat Reverse Engineering Documentation
+Version: 0.6
+Date: 2022-05-11
+Authors@R: c(person("Matt", "Shotwell", role=c("aut", "cre"),
                    email="matt.shotwell@vanderbilt.edu"),
-            person("Clint", "Cummins", role="ctb",
+             person("Clint", "Cummins", role="ctb",
                    email="clint@stanford.edu"))
 Maintainer: Matt Shotwell <matt.shotwell@vanderbilt.edu>
-Description: Read SAS files in the sas7bdat data format.
+Description: Documentation and prototypes for the earliest (circa 2010) open-source effort to reverse engineer the sas7bdat file format. The package includes a prototype reader for sas7bdat files. However, newer packages (notably the haven package) contain more robust readers for sas7bdat files.
 Depends: R (>= 2.10)
+Suggests: haven
 License: GPL (>= 2)
 LazyLoad: yes
