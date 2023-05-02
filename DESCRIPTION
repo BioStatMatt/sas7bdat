@@ -1,8 +1,8 @@
 Package: sas7bdat
 Type: Package
 Title: sas7bdat Reverse Engineering Documentation
-Version: 0.6
-Date: 2022-05-11
+Version: 0.7
+Date: 2023-05-02
 Authors@R: c(person("Matt", "Shotwell", role=c("aut", "cre"),
                    email="matt.shotwell@vanderbilt.edu"),
              person("Clint", "Cummins", role="ctb",

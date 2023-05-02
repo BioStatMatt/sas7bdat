@@ -1,5 +1,44 @@
 \documentclass{article}
+\usepackage{cmap} % fix search and cut-and-paste in Acrobat
+\usepackage{ifthen}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{alltt}
+\setcounter{secnumdepth}{0}
+\usepackage{longtable,ltcaption,array}
+\setlength{\extrarowheight}{2pt}
+\newlength{\DUtablewidth} % internal use in tables
 \usepackage{natbib}
+%%% Fallback definitions for Docutils-specific commands
+
+% Provide a length variable and set default, if it is new
+\providecommand*{\DUprovidelength}[2]{
+  \ifthenelse{\isundefined{#1}}{\newlength{#1}\setlength{#1}{#2}}{}
+}
+
+% line block environment
+\DUprovidelength{\DUlineblockindent}{2.5em}
+\ifthenelse{\isundefined{\DUlineblock}}{
+  \newenvironment{DUlineblock}[1]{%
+    \list{}{\setlength{\partopsep}{\parskip}
+            \addtolength{\partopsep}{\baselineskip}
+            \setlength{\topsep}{0pt}
+            \setlength{\itemsep}{0.15\baselineskip}
+            \setlength{\parsep}{0pt}
+            \setlength{\leftmargin}{#1}}
+    \raggedright
+  }
+  {\endlist}
+}{}
+
+\ifthenelse{\isundefined{\hypersetup}}{
+  \usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
+  \usepackage{bookmark}
+  \urlstyle{same} % normal text font (alternatives: tt, rm, sf)
+}{}
+\hypersetup{
+  pdftitle={Tools and Strategies for Reverse Engineering the Format of Statistical Data Files (Draft)},
+}
 \begin{document}
 
 \title{Tools and Strategies for Reverse Engineering the Format of Statistical Data Files (Draft)}
