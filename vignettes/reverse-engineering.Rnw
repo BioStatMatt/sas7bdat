@@ -1,15 +1,23 @@
 \documentclass{article}
 \usepackage{natbib}
 \begin{document}
-\begin{center}
-Tools and Strategies for Reverse Engineering the Format of Statistical Data Files\\
-\vspace{0.5cm}
-Matt Shotwell\\
-\vspace{0.2cm}
-Vanderbilt University
-\end{center}
-\vspace{1cm}
 
+\title{Tools and Strategies for Reverse Engineering the Format of Statistical Data Files (Draft)}
+\author{}
+\date{}
+\maketitle
+
+by:
+
+\begin{quote}
+\begin{DUlineblock}{0em}
+\item[] Matthew S. Shotwell, PhD
+\item[] Associate Professor
+\item[] Department of Biostatistics
+\item[] Vanderbilt University
+\item[] \href{mailto:matt.shotwell@vanderbilt.edu}{matt.shotwell@vanderbilt.edu}
+\end{DUlineblock}
+\end{quote}
 \section{Introduction}
 Reverse engineering is much like forensics. At some point in the past, the process was conceived and implemented. In the present, the input and output are observable, but the process itself is a {\it black box}, that is, the details of its design and implementation have been lost, or concealed. Forensics, and reverse engineering attempt to recover the details.
 
