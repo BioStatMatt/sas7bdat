@@ -187,10 +187,34 @@ bytes 70-72	SAS name	iconv name
 29		latin1		ISO-8859-1
 30		latin2		ISO-8859-2
 31		latin3		ISO-8859-3
+32		latin4		ISO-8859-4
+33		cyrillic	ISO-8859-5
 34		arabic		ISO-8859-6
+35		greek		ISO-8859-7
 36		hebrew		ISO-8859-8
+37		latin5		ISO-8859-9
+38		latin6		ISO-8859-10
 39		thai		ISO-8859-11
-40		latin5		ISO-8859-9
+40		latin9		ISO-8859-15
+41		pcoem437	CP437
+42		pcoem850	CP850
+43		pcoem852	CP852
+44		pcoem857	CP857
+45		pcoem858	CP858
+46		pcoem862	CP862
+47		pcoem864	CP864
+48		pcoem865	CP865
+49		pcoem866	CP866
+50		pcoem869	CP869
+51		pcoem874	CP874
+52		pcoem921	CP921
+53		pcoem922	CP922
+54		pcoem1129	CP1129
+55		msdos720	CP720
+56		msdos737	CP737
+57		msdos775	CP775
+58		pcoem860	CP860
+59		pcoem863	CP863
 60		wlatin2		WINDOWS-1250
 61		wcyrillic	WINDOWS-1251
 62		wlatin1		WINDOWS-1252
@@ -198,12 +222,39 @@ bytes 70-72	SAS name	iconv name
 64		wturkish	WINDOWS-1254
 65		whebrew		WINDOWS-1255
 66		warabic		WINDOWS-1256
+67		wbaltic		WINDOWS-1257
+68		wvietnamese	WINDOWS-1258
+69				MACROMAN
+70				MACARABIC
+71				MACHEBREW
+72				MACGREEK
+73				MACTHAI
+75				MACTURKISH
+76				MACUKRAINE
+118		ms-950		WINDOWS-950
 119		euc-tw		EUC-TW
 123		big5		BIG-5
 125		euc-cn		EUC-CN
+126		ms-936		WINDOWS-936
+128		zwin		CP1381
 134		euc-jp		EUC-JP
+136		ms-932		WINDOWS-932
 138		shift-jis	SHIFT-JIS
 140		euc-kr		EUC-KR
+141		kpce		CP949
+142		kwin		CP949
+163				MACICELAND
+167				ISO-2022-JP
+168				ISO-2022-KR
+169				ISO-2022-CN
+172				ISO-2022-CN-EXT
+204		any		(Unspecified)
+205				GB18030
+227		latin8		ISO-8859-14
+245				MACCROATIAN
+246				MACCYRILLIC
+247				MACROMANIA
+248				SHIFT_JISX0213
 ==============	==============	============= 
 
 When the encoding is unspecified, the file uses the encoding of the SAS session that produced it (usually Windows-1252).
