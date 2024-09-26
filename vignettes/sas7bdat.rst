@@ -338,24 +338,17 @@ offset		length		conf.	description
 344|672		2		low	int, value 0
 346|674		2		low	int, values 0|8
 348|676		2		low	int, value 4
-350|678		2		low	int, value 0
-352|680		2		low	int, values 12,32|0
-354|682		2		low	int, length of Creator Software string := LCS
-356|684		2		low	int, value 0
-358|686		2		low	int, value 20
-360|688		2		low	int, value of 8 indicates MXNAM and MXLAB valid := IMAXN
-362|690		8		low	zeroes
-370|698		2		low	int, value 12
-372|700		2		low	int, value 8
-374|702		2		low	int, value 0
-376|704		2		low	int, value 28
-378|706		2		low	int, length of Creator PROC step name := LCP
+350|678		6		high	`Row Size Text Pointer`_ to the Creator Software string
+356|684		6		medium	`Row Size Text Pointer`_ (unknown purpose)
+362|690		6		high	`Row Size Text Pointer`_ to the Compression Method
+368|696		6		medium	`Row Size Text Pointer`_ (unknown purpose)
+374|702		6		high	`Row Size Text Pointer`_ to the Creator PROC step name
 380|708		36		low	zeroes
 416|744		2		low	int, value 4
 418|746		2		low	int, value 1
 420|748		2		low	int, number of Column Text subheaders in file := _`NCT`
-422|750		2		low	int, max length of column names := MXNAM (see IMAXN)
-424|752		2		low	int, max length of column labels := MXLAB (see IMAXN)
+422|750		2		low	int, max length of column names
+424|752		2		low	int, max length of column labels
 426|754		12		low	zeroes
 438|766		2		medium	int, number of data rows on a full page INT[(PL - 24 / 40)/`RL`_]; 0 for compressed file
 440|768		27		low	zeroes
@@ -364,6 +357,22 @@ offset		length		conf.	description
 480|808				medium	Total length of subheader, QL
 =========	=========	======  ===============================================
 
+
+Row Size Text Pointer
++++++++++++++++++++++
+
+Similar to `Column Name Pointers`_ described  further below, Row Size Text Pointers identify a chunk of text in one of the Column Text arrays using a (index, offset, length) triplet. Unlike the Column Name Pointers, they are six bytes instead of eight bytes.
+
+======	======  ======  ======================================================
+offset	length	conf.	description
+======	======  ======  ======================================================
+0	2	high	int, text index to select `Column Text Subheader`_
+2	2	high	int, text offset w.r.t. end of selected Column Text signature.
+4	2	high	int, text length
+6		high	Total length of row size text pointer
+======	======  ======  ======================================================
+
+An offset and length of zero are interpreted as a null string (for example, the absence of a Compression Method).
 
 
 Column Size Subheader 
@@ -452,18 +461,14 @@ offset	length	conf.	description
 10|14	2	low	*????????????*
 12|16	2	low	*????????????*
 14|18	2	low	*????????????*
-16|20	varies	medium	ascii, compression & Creator PROC step name that generated data
-varies	%QL	high	ascii, combined column names, labels, formats
+16|20	%QL	high	ascii, combined compression, Creator PROC step name, column names, labels, and formats
 =======	======  ======  ===============================================
 
 This subheader sometimes appears more than once; each is a separate array. If so, the "column name index" field in `column name pointers`_ selects a particular text array - 0 for the first array, 1 for the second, etc. Similarly, "column format index" and "column label index" fields also select a text array. Offsets to strings within the text array are multiples of 4, so the column names and labels section of the array often contains many nulls for padding.
 
-The variables LCS and LCP from the `Row Size subheader`_ refer to a text field at the start of the text array (at offset 16|20) in the first Column Text subheader (before the column name strings).  This text field also contains compression information.  The following logic decodes this initial field:
+Certain file metadata can be found at the start of the text array (at offset 16|20) in the first Column Text subheader, before the column name strings. This location is the usual destination of the `Row Size Text Pointers`_ discussed above, and includes the Creator PROC step name, the Creator Software string, and the Compression Method (and possibly others).
 
-1. If the first 8 bytes of the field are blank, file is not compressed, and set LCS=0.  The Creator PROC step name is the LCP bytes starting at offset 16.
-2. If LCS > 0 (still), the file is not compressed, the first LCS bytes are the Creator Software string (padded with nulls).  Set LCP=0.  Stat/Transfer files use this pattern.
-3. If the first 8 bytes of the field are ``SASYZCRL``, the file is compressed with Run Length Encoding.  The Creator PROC step name is the LCP bytes starting at offset 24.
-4. If the first 8 bytes are nonblank and options 2 or 3 above are not used, this probably indicates COMPRESS=BINARY.  We need test files to confirm this, though.
+If the Compression Method is ``SASYZCRL``, then compressed subheaders use Run Length Encoding. If the Compression Method is ``SASYZCR2``, then compressed subheaders use binary (Ross) encoding. If the Compression Method is a null string (length and offset in the text pointer are zero), then the file is expected to be uncompressed.
 
 
 Column Name Subheader
